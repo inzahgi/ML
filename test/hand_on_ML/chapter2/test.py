@@ -573,8 +573,10 @@ if __name__ == '__main__':
     cat_encoder = full_pipeline.named_transformers_["cat"]
     cat_one_attribs = list(cat_encoder.categories_[0])
     attributes = num_attribs + extra_attribs + cat_one_attribs
+
+    print("line = 577", attributes)
     ##print("line = 570 ", sorted(zip(feature_importances, attributes), reverse=True))
-    sorted(zip(feature_importances, attributes), reverse=True)
+    ##sorted(zip(feature_importances, attributes), reverse=True)
 
 
     ## 在测试集上 测试模型
