@@ -82,12 +82,14 @@ class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
 
 
 class OldDataFrameSelector(BaseEstimator, TransformerMixin):
-    def __int__(self, attribute_names):
+    def __init__(self, attribute_names):
         self.attribute_names = attribute_names
     def fit(self, X, y=None):
         return self
     def transform(self, X):
         return X[self.attribute_names].values
+
+
 
 
 
@@ -530,7 +532,7 @@ if __name__ == '__main__':
     grid_search = GridSearchCV(forest_reg,
                                param_grid,
                                cv=5,
-                               scoring='neg_mean_square_error',
+                               scoring='neg_mean_squared_error',
                                return_train_score=True)
     grid_search.fit(housing_prepared, housing_labels)
     print("line = 528", grid_search.best_params_)
@@ -547,7 +549,7 @@ if __name__ == '__main__':
     ## Randomized Search 随机搜索
 
     param_distribs = {
-        'n_estimator': randint(low=1, high=200),
+        'n_estimators': randint(low=1, high=200),
         'max_features': randint(low=1, high=8),
     }
 
@@ -571,7 +573,9 @@ if __name__ == '__main__':
     cat_encoder = full_pipeline.named_transformers_["cat"]
     cat_one_attribs = list(cat_encoder.categories_[0])
     attributes = num_attribs + extra_attribs + cat_one_attribs
-    print("line = 570 ",sorted(zip(feature_importances, attributes), reverse=True))
+    ##print("line = 570 ", sorted(zip(feature_importances, attributes), reverse=True))
+    sorted(zip(feature_importances, attributes), reverse=True)
+
 
     ## 在测试集上 测试模型
     final_model = grid_search.best_estimator_
