@@ -42,6 +42,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score
+from sklearn.metrics import precision_recall_curve
 
 
 import matplotlib
@@ -73,6 +74,15 @@ def plot_digits(instances, images_per_row=10, **options):
     image = np.concatenate(row_images, axis=0)
     plt.imshow(image, cmap=matplotlib.cm.binary, **options)
     plt.axis("off")
+
+
+## 绘制精度和召回率 作为阈值的函数
+def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
+    plt.plot(thresholds, precisions[:-1],
+             "b--",
+             label="Precision")
+    plt.plot(thresholds,
+             recalls)
 
 
 if __name__ == '__main__':
@@ -151,7 +161,17 @@ if __name__ == '__main__':
     y_scores = sgd_clf.decision_function([some_digit])
     print("line = 152", y_scores)
 
+    ## 阈值判断
+    threshold = 200000
+    y_some_digit_pred = (y_scores > threshold)
+    print("line = 157", y_some_digit_pred)
 
+    ## 获得训练集中所有实例分数
+    y_scores = cross_val_predict(sgd_clf, X_train, y_train_5, cv=3, method="decision_function")
+    print("line = 161", y_scores.shape)
+
+    ## 计算所有可能的精度和召回率的阈值
+    precision, recalls, thresholds = precision_recall_curve(y_train_5, y_scores)
 
 
 
