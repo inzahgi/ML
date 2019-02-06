@@ -43,6 +43,11 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score, recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.preprocessing import StandardScaler
 
 
 import matplotlib
@@ -82,7 +87,37 @@ def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
              "b--",
              label="Precision")
     plt.plot(thresholds,
-             recalls)
+             recalls[:-1],
+             "g--",
+             label="Recall")
+    plt.xlabel("Threshold", fontsize=16)
+    plt.legend(loc="upper left", fontsize=16)
+    plt.ylim([0, 1])
+
+
+def plot_precision_vs_recall(precisions, recalls):
+    plt.plot(recalls,
+             precisions,
+             "b--",
+             linewidth=2)
+    plt.xlabel("Recall", fontsize=16)
+    plt.ylabel("Precision", fontsize=16)
+    plt.axis([0, 1, 0, 1])
+
+
+def plot_roc_curve(fpr, tpr, label=None):
+    plt.plot(fpr, tpr, linewidth=2, label=label)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.axis([0, 1, 0, 1])
+    plt.xlabel('False Positive Rate', fontsize=16)
+    plt.ylabel('True Positive Rate', fontsize=16)
+
+## 画出混淆矩阵的图像
+def plot_confusion_matrix(matrix):
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(matrix)
+    fig.colorbar(cax)
 
 
 if __name__ == '__main__':
@@ -171,8 +206,107 @@ if __name__ == '__main__':
     print("line = 161", y_scores.shape)
 
     ## 计算所有可能的精度和召回率的阈值
-    precision, recalls, thresholds = precision_recall_curve(y_train_5, y_scores)
+    precisions, recalls, thresholds = precision_recall_curve(y_train_5, y_scores)
+
+    ## 利用matplotlib绘制精度和召回率 作为阈值的图像
+    plt.figure(figsize=(8, 4))
+    plot_precision_recall_vs_threshold(precisions, recalls, thresholds)
+    plt.xlim([-700000, 700000])
+    ##save_fig("precision_recall_vs_threshold_plot")
+    ##plt.show()
+
+    (y_train_pred == (y_scores > 0)).all()
+
+    plt.figure(figsize=(8, 6))
+    plot_precision_vs_recall(precisions, recalls)
+    ##save_fig("precision_vs_recall_plot")
+    ##plt.show()
+
+    y_train_pred_90 = (y_scores > 70000)
+
+    ##  精确度得分
+    print("line = 209",precision_score(y_train_5, y_train_pred_90))
+    ## 召回率得分
+    print("line = 212", recall_score(y_train_5, y_train_pred_90))
+
+    ##  需要使用 roc_curve 函数计算各种阈值的 TPR 和 FPR
+    fpr, tpr, thresholds = roc_curve(y_train_5, y_scores)
+
+    plt.figure(figsize=(8, 6))
+    plot_roc_curve(fpr, tpr)
+    save_fig("roc_curve_plot")
+    plt.show()
+
+    roc_auc_score(y_train_5, y_scores)
+
+    forest_clf = RandomForestClassifier(random_state=42)
+    y_probas_forest = cross_val_predict(forest_clf, X_train, y_train_5, cv=3,
+                                        method="predict_proba")
+    y_scores_forest = y_probas_forest[:, 1]
+    fpr_forest, tpr_forest, thresholds_forest = roc_curve(y_train_5, y_scores_forest)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, "b:", linewidth=2, label="SGD")
+
+    plot_roc_curve(fpr_forest, tpr_forest, "Random Forest")
+    plt.legend(loc="lower right", fontsize=16)
+    ##save_fig("roc_curve_comparison_plot")
+    ##plt.show()
+
+    roc_auc_score(y_train_5, y_scores_forest)
+
+    y_train_pred_forest = cross_val_predict(forest_clf, X_train, y_train_5, cv=3)
+    print("line = 251",precision_score(y_train_5, y_train_pred_forest))
+    print("line = 252",recall_score(y_train_5, y_train_pred_forest))
+
+## 多类分类
+
+    ## SGDClassifier
+    sgd_clf.fit(X_train, y_train)
+    sgd_clf.predict([some_digit])
+
+    some_digit_scores = sgd_clf.decision_function([some_digit])
+    print("line = 261", some_digit_scores)
+
+    print("line = 263",np.argmax(some_digit_scores))
+    print("line = 264", sgd_clf.classes_)
+    print("line = 265", sgd_clf.classes_[5])
+
+    ## SGDClassifier使用OvO策略创建多分类
+    ovo_clf = OneVsOneClassifier(SGDClassifier(max_iter=5, random_state=42))
+    ovo_clf.fit(X_train, y_train)
+    ovo_clf.predict([some_digit])
+    print("line = 272", len(ovo_clf.estimators_))
+
+    ## 训练一个 RandomForestClassifier
+    forest_clf.fit(X_train, y_train)
+    forest_clf.predict([some_digit])
+
+    ## predict_proba 获取分类器为每个类分配给每个实例的概率
+    forest_clf.predict_proba([some_digit])
+
+    cross_val_score(sgd_clf, X_train, y_train, cv=3, scoring="accuracy")
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
+    cross_val_score(sgd_clf, X_train_scaled, y_train, cv=3, scoring="accuracy")
+
+## 误差分析
+    ##  查看混淆矩阵  先使用cross_val_predict 进行预测  然后调用 confusion_matrix
+    y_train_pred = cross_val_predict(sgd_clf, X_train_scaled, y_train, cv=3)
+    conf_mx = confusion_matrix(y_train, y_train_pred)
+    print("line = 292", conf_mx)
+
+    plt.matshow(conf_mx, cmap=plt.cm.gray)
+    save_fig("confusion_matrix_plot", tight_lay=False)
+    plt.show()
 
 
+    ##
+    cl_a, cl_b = 3, 5
+    X_aa = X_train[(y_train == cl_a) & (y_train_pred == cl_a)]
+    X_ab = X_train[(y_train == cl_a) & (y_train_pred == cl_b)]
+    X_ba = X_train[(y_train == cl_b) & (y_train_pred == cl_a)]
+    X_
 
 
