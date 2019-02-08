@@ -48,6 +48,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
 
 
 import matplotlib
@@ -307,6 +308,48 @@ if __name__ == '__main__':
     X_aa = X_train[(y_train == cl_a) & (y_train_pred == cl_a)]
     X_ab = X_train[(y_train == cl_a) & (y_train_pred == cl_b)]
     X_ba = X_train[(y_train == cl_b) & (y_train_pred == cl_a)]
-    X_
+    X_bb = X_train[(y_train == cl_b) & (y_train_pred == cl_b)]
+
+    plt.figure(figsize=(8,8))
+    plt.subplot(221); plot_digits(X_aa[:25], images_per_row=5)
+    plt.subplot(222); plot_digits(X_ab[:25], images_per_row=5)
+    plt.subplot(223); plot_digits(X_ba[:25], images_per_row=5)
+    plt.subplot(224); plot_digits(X_bb[:25], images_per_row=5)
+    save_fig("error_analysis_digits_plot")
+    plt.show()
+
+
+##  多标签分类
+    y_train_large = (y_train >= 7)
+    y_train_odd = (y_train % 2 == 1)
+    y_multilabel = np.c_[y_train_large, y_train_odd]
+
+    knn_clf = KNeighborsClassifier()
+    knn_clf.fit(X_train, y_multilabel)
+
+    knn_clf.predict([some_digit])
+
+    y_train_knn_pred = cross_val_predict(knn_clf, X_train, y_multilabel, cv=3, n_jobs=-1)
+    f1_score(y_multilabel, y_train_knn_pred, average="macro")
+
+##  多输出分类
+    noise = np.random.randint(0, 100, (len(X_train), 784))
+    X_train_mod = X_train + noise
+    noise = np.random.randint(0, 100, (len(X_test), 784))
+    X_test_mod = X_test + noise
+    y_train_mod = X_train
+    y_test_mod = X_test
+
+    some_index = 5500
+    plt.subplot(121); plot_digit(X_test_mod[some_index])
+    plt.subplot(122); plot_digit(y_test_mod[some_index])
+    save_fig("noisy_digit_example_plot")
+    plt.show()
+
+    knn_clf.fit(X_train_mod, y_train_mod)
+    clean_digit = knn_clf.predict([X_test_mod[some_index]])
+    plot_digit(clean_digit)
+    save_fig("cleaned_digit_example_plot")
+    plt.show()
 
 
