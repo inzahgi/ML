@@ -135,11 +135,14 @@ def split_train_test(data, test_ratio):
     ##  按照索引返回训练数据和测试数据
     return data.iloc[train_inices], data.iloc[test_indices]
 
+##根据id的MD5的最后一位字符  按比例计算测试集
 def test_set_check(identifier, test_ratio, hash=hashlib.md5):
-    return bytearray(hash(np.int64(identifier)).digest())[-1] < 256
+    ## 该id是否为测试集
+    return bytearray(hash(np.int64(identifier)).digest())[-1] < 256*test_ratio
 ## 利用id 拆分训练数据和测试数据
 def split_train_test_by_id(data, test_ratio, id_column):
-    ids = data[id_column]
+    ids = data[id_column]   ##  id_column  为 "index"
+    ##  将id list 转换为 Boolean list
     in_test_set = ids.apply(lambda id_ : test_set_check(id_, test_ratio))
     return data.loc[~in_test_set], data.loc[in_test_set]
 
@@ -192,187 +195,195 @@ if __name__ == '__main__':
     housing_with_id = housing.reset_index()
     ##使用行索引作为ID
     train_set, test_set = split_train_test_by_id(housing_with_id, 0.2, "index")
-#     #
-#     # housing_with_id["id"] = housing["longitude"]*1000 + housing["latitude"]
-#     # train_set, test_set = split_train_test_by_id(housing_with_id, 0.2, "id")
-#     # print(test_set.head())
-#
-#     ## 利用scikit-learn 提供的函数
-#     train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
-#     print(test_set.head())
-#
-#     ## 收入中位数直方图 原始图
-#     # housing["median_income"].hist()
-#     # plt.show()
-#
-#     # 除以1.5 以限制收入类别的数量
-#     housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
-#     housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
-#     ## 对收入中位数按照 1万 2万 3万 4万 5万及5万以上进行统计
-#     housing["income_cat"].value_counts()
-#     # 调整后的直方图
-#     housing["income_cat"].hist()
-#     ##plt.show()
-#
-#     ##  根据收入类别进行分层抽样
-#     split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-#     for train_index, test_index in split.split(housing, housing["income_cat"]):
-#        strat_train_set = housing.loc[train_index]
-#        strat_test_set = housing.loc[test_index]
-#
-# ##    完整数据集中 查看收入类别比例
-#     print(housing["income_cat"].value_counts() /len(housing))
-#     # 测试集中 查看收入类别比例
-#     print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
-#
-#
-#     train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
-#     compare_props = pd.DataFrame({
-#         "Overall": income_cat_proportions(housing),
-#         "Stratified": income_cat_proportions(strat_test_set),
-#         "Random": income_cat_proportions(test_set),
-#     }).sort_index()
-#     #随机误差
-#     compare_props["Rand. %error"] = 100 * compare_props["Random"] / compare_props["Overall"] - 100
-#     # 分层抽样的误差
-#     compare_props["Strat. %error"] = 100 * compare_props["Stratified"] / compare_props["Overall"] - 100
-#
-#     print(compare_props)
-#
-#     # 删除income_cat 属性 恢复原始状态
-#     for set_ in (strat_train_set, strat_test_set):
-#         set_.drop("income_cat", axis=1, inplace=True)
-#
-#     # 创建一个 训练数据副本
-#     housing = strat_train_set.copy()
-#
-#     # 可视化 散点 信息
-#     # housing.plot(kind="scatter", x="longitude", y="latitude")
-#     # plt.show()
-#
-#     ## 设置显示密度
-#     # housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
-#     # plt.show()
-#     #
-#     # housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
-#     #              s=housing["population"]/100, label = "population", figsize=(10, 7),
-#     #              c="median_house_value", cmap=plt.get_cmap("jet"),
-#     #              colorbar=True,
-#     #              sharex=False)
-#     # plt.legend()
-#     # save_fig("housing_prices_scatterplot")
-#     # plt.show()
-#
-#
-#     ##  读取前一张图片 将其放到加利福利亚的地图上
-#     # california_img = mpimg.imread(PROJECT_ROOT_DIR + '\\..\\images\\02_End_to_End_project\\california.png')
-#     # ax = housing.plot(kind="scatter", x="longitude", y="latitude", figsize=(10, 7),
-#     #                   s=housing['population']/100, label="Population",
-#     #                   c="median_house_value", cmap=plt.get_cmap("jet"),
-#     #                   colorbar=False,
-#     #                   alpha=0.4
-#     #                   )
-#     #
-#     # plt.imshow(california_img, extent=[-124.55, -113.80, 32.45, 42.08], alpha=0.5,
-#     #            cmap=plt.get_cmap("jet"))
-#     #
-#     # plt.ylabel("Latitude", fontsize=14)
-#     # plt.xlabel("Longitude", fontsize=14)
-#     #
-#     # prices = housing["median_house_value"]
-#     # tick_values = np.linspace(prices.min(), prices.max(), 11)
-#     #
-#     # cbar = plt.colorbar()
-#     # cbar.ax.set_yticklabels(["$%dk"%(round(v/1000)) for v in tick_values], fontsize=14)
-#     # cbar.set_label('Median House Value', fontsize=16)
-#     #
-#     # plt.legend(fontsize=16)
-#     # save_fig("california_housing_prices_plot")
-#     # plt.show()
-#
-#
-#     # 使用 corr()  计算每对属性之间的标准相关性系数
-#     corr_matrix = housing.corr()
-#     # 查看每个属性与房屋中值的相关程度
-#     print(corr_matrix["median_house_value"].sort_values(ascending=False))
-#
-#     ## 绘制部分属性 相关性图表
-#     attributes = ["median_house_value",
-#                   "median_income",
-#                   "total_rooms",
-#                   "housing_median_age"]
-#     scatter_matrix(housing[attributes], figsize=(12, 8))
-#     ##save_fig("scatter_matrix_plot")
-#     ##plt.show()
-#
-#     ## 房屋中值与 收入中位数 的相关性散点图
-#     housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1)
-#     plt.axis([0, 16, 0, 550000])
-#     ##save_fig("income_vs_house_value_scatterplot")
-#     ##plt.show()
-#
-#     ## 每个家庭平均拥有的房间数 = 总房间数 / 总的家庭数
-#     housing["rooms_per_household"] = housing["total_rooms"] / housing["households"]
-#     ## 总卧室数 / 总房间数
-#     housing["bedrooms_per_room"] = housing["total_bedrooms"] / housing["total_rooms"]
-#     ##  平均家庭人口数
-#     housing["population_per_household"] = housing["population"]/housing["households"]
-#
-#     ## 查看新的属性的相关性
-#     corr_matrix = housing.corr()
-#     print("\n",corr_matrix["median_house_value"].sort_values(ascending=False))
-#     ## 绘制散点图
-#     housing.plot(kind="scatter", x="rooms_per_household", y="median_house_value", alpha=0.2)
-#     plt.axis([0, 5, 0, 520000])
-#     ##plt.show()
-#
-#     print("line = 255---\n", housing.describe())
-#
-#     ## 将 median_house_value_ 这一列的属性去掉 同时创建数据副本 作为训练集
-#     housing = strat_train_set.drop("median_house_value", axis=1)
-#     ## 创建数据集标签 median_house_value 即为标签
-#     housing_labels = strat_train_set["median_house_value"].copy()
-#
-#     ## 抽样取出部分新创建的训练集中的实例
-#     sample_incomplete_rows = housing[housing.isnull().any(axis=1)].head()
-#     print("\n",sample_incomplete_rows)
-#
-#
-# ##  data cleaning 数据清洗
-#     ## option 1-删除相应的区域
-#     sample_incomplete_rows.dropna(subset=["total_bedrooms"])
-#     ## option 2-删除整个属性
-#     sample_incomplete_rows.drop("total_bedrooms", axis=1)
-#     ## 计算中值
-#     median = housing["total_bedrooms"].median()
-#     ## 将缺失值 设置为某个值 (零  均值  中位数)
-#     sample_incomplete_rows["total_bedrooms"].fillna(median, inplace=True)
-#     print("line = 275", sample_incomplete_rows)
-#
-#     ##  使用imputer 处理缺失值
-#     # 创建了一个实例  并指定使用中位数替换缺失值
-#     #  median 为 total_bedrooms 的中值 在上一个cell 中已经计算出来 这里直接用
-#     imputer = Imputer(strategy="median")
-#
-#     # 移除 ocean_proximity 的数据副本 即把这一列去掉
-#     housing_num = housing.drop('ocean_proximity', axis=1)
-#
-#     # 使用 fit 将imputer 实例 fit 到训练数据
-#     imputer.fit(housing_num)
-#     ## 打印 imputer 中计算的中位数
-#     print("line = 290", imputer.statistics_)
-#
-#     ## 打印 原始数据的 中位数
-#     print("line = 294", housing_num.median().values)
-#
-#
-#     ## 使用 训练好的 imputer 通过学习的中位数 替换缺失值对 训练集进行转换
-#     X = imputer.transform(housing_num)
-#     ## 将转换后的numpy 数组 放回 pandas dataFrame
-#     housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=list(housing.index.values))
-#     print("line = 301",housing_tr.loc[sample_incomplete_rows.index.values])
-#
-#     print("line = 303",imputer.strategy)
+
+    ##  自定义索引 拆分测试集和训练集
+    housing_with_id["id"] = housing["longitude"]*1000 + housing["latitude"]
+    train_set, test_set = split_train_test_by_id(housing_with_id, 0.2, "id")
+    print("line = 202 self define for test:\n", test_set.head(), "\n")
+
+    ## 利用scikit-learn 提供的函数
+    train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+    print("line = 206  split by scikit-leaarn func :\n", test_set.head(), "\n")
+
+    # 收入中位数直方图 原始图
+    housing["median_income"].hist()
+    plt.show()
+
+    # 除以1.5 以限制收入类别的数量
+    housing["income_cat"] = np.ceil(housing["median_income"] / 1.5)
+    housing["income_cat"].where(housing["income_cat"] < 5, 5.0, inplace=True)
+    ## 对收入中位数按照 1万 2万 3万 4万 5万及5万以上进行统计
+    print("line = 216 income cat value_counts(): \n",housing["income_cat"].value_counts(),"\n")
+    # 调整后的直方图
+    housing["income_cat"].hist()
+    plt.show()
+
+    ##  根据收入类别进行分层抽样  循环一次
+    split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    for train_index, test_index in split.split(housing, housing["income_cat"]):
+        strat_train_set = housing.loc[train_index]
+        strat_test_set = housing.loc[test_index]
+
+##    完整数据集中 查看收入类别比例
+    print("line = 228 all cat \n", housing["income_cat"].value_counts() /len(housing), "\n")
+    # 测试集中 查看收入类别比例
+    print("line = 230 test cat \n", strat_test_set["income_cat"].value_counts() / len(strat_test_set), "\n")
+
+
+    ##  拆分测试集和训练集
+    train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+
+    compare_props = pd.DataFrame({
+        "Overall": income_cat_proportions(housing),
+        "Stratified": income_cat_proportions(strat_test_set),
+        "Random": income_cat_proportions(test_set),
+    }).sort_index()
+
+    #随机误差
+    compare_props["Rand. %error"] = 100 * compare_props["Random"] / compare_props["Overall"] - 100
+    # 分层抽样的误差
+    compare_props["Strat. %error"] = 100 * compare_props["Stratified"] / compare_props["Overall"] - 100
+
+    print("line = 247 compare props\n", compare_props, "\n")
+
+    # 删除income_cat 属性 恢复原始状态
+    for set_ in (strat_train_set, strat_test_set):
+        set_.drop("income_cat", axis=1, inplace=True)
+
+    # 创建一个 训练数据副本
+    housing = strat_train_set.copy()
+
+    ##可视化 散点 信息
+    housing.plot(kind="scatter", x="longitude", y="latitude")
+    plt.show()
+
+    # 设置显示密度
+    housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.1)
+    plt.show()
+
+    ## 房价和人口关系图
+    housing.plot(kind="scatter", x="longitude", y="latitude", alpha=0.4,
+                 s=housing["population"]/100, label="population", figsize=(10, 7),
+                 c="median_house_value", cmap=plt.get_cmap("jet"),
+                 colorbar=True,
+                 sharex=False)
+    plt.legend()
+    save_fig("housing_prices_scatterplot")
+    plt.show()
+
+
+    #  读取前一张图片 将其放到加利福利亚的地图上
+    california_img = mpimg.imread(PROJECT_ROOT_DIR + '\\..\\images\\02_End_to_End_project\\california.png')
+    ax = housing.plot(kind="scatter", x="longitude", y="latitude", figsize=(10, 7),
+                      s=housing['population']/100, label="Population",
+                      c="median_house_value", cmap=plt.get_cmap("jet"),
+                      colorbar=False,
+                      alpha=0.4
+                      )
+    ##  底图显示加州地图
+    plt.imshow(california_img, extent=[-124.55, -113.80, 32.45, 42.08], alpha=0.5,
+               cmap=plt.get_cmap("jet"))
+    ##  设置 横轴 纵轴
+    plt.ylabel("Latitude", fontsize=14)
+    plt.xlabel("Longitude", fontsize=14)
+    ##  读取房屋价中位数
+    prices = housing["median_house_value"]
+    ##  生成由低至高的 价格矩阵
+    tick_values = np.linspace(prices.min(), prices.max(), 11)
+    ##  设置色盘
+    cbar = plt.colorbar()
+    cbar.ax.set_yticklabels(["$%dk"%(round(v/1000)) for v in tick_values], fontsize=14)
+    cbar.set_label('Median House Value', fontsize=16)
+    ##  设置图例
+    plt.legend(fontsize=16)
+    save_fig("california_housing_prices_plot")
+    plt.show()
+
+
+    # 使用 corr()  计算每对属性之间的标准相关性系数
+    corr_matrix = housing.corr()
+    # 查看每个属性与房屋中值的相关程度
+    print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+    ## 绘制部分属性 相关性图表
+    attributes = ["median_house_value",
+                  "median_income",
+                  "total_rooms",
+                  "housing_median_age"]
+    scatter_matrix(housing[attributes], figsize=(12, 8))
+    save_fig("scatter_matrix_plot")
+    plt.show()
+
+    ## 房屋中值与 收入中位数 的相关性散点图
+    housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1)
+    plt.axis([0, 16, 0, 550000])
+    save_fig("income_vs_house_value_scatterplot")
+    plt.show()
+
+    ## 每个家庭平均拥有的房间数 = 总房间数 / 总的家庭数
+    housing["rooms_per_household"] = housing["total_rooms"] / housing["households"]
+    ## 总卧室数 / 总房间数
+    housing["bedrooms_per_room"] = housing["total_bedrooms"] / housing["total_rooms"]
+    ##  平均家庭人口数
+    housing["population_per_household"] = housing["population"]/housing["households"]
+
+    ## 查看新的属性的相关性
+    corr_matrix = housing.corr()
+    print("line = 332 corr_matrix[\"median_house_value\"]\n",
+          corr_matrix["median_house_value"].sort_values(ascending=False),"\n")
+    ## 绘制散点图
+    housing.plot(kind="scatter", x="rooms_per_household", y="median_house_value", alpha=0.2)
+    plt.axis([0, 5, 0, 520000])
+    plt.show()
+
+    print("line = 339  housing.describe\n", housing.describe(), "\n")
+
+## 准备数据
+    ## 将 median_house_value_ 这一列的属性去掉 同时创建数据副本 作为训练集
+    housing = strat_train_set.drop("median_house_value", axis=1)
+    ## 创建数据集标签 median_house_value 即为标签
+    housing_labels = strat_train_set["median_house_value"].copy()
+
+    ## 抽样取出部分新创建的训练集中的实例
+    sample_incomplete_rows = housing[housing.isnull().any(axis=1)].head()
+    print("line = 349 sample_incomplete_rows \n",sample_incomplete_rows, "\n")
+
+
+##  data cleaning 数据清洗
+    ## option 1-删除相应的区域
+    sample_incomplete_rows.dropna(subset=["total_bedrooms"])
+    ## option 2-删除整个属性
+    sample_incomplete_rows.drop("total_bedrooms", axis=1)
+    ## 计算中值
+    median = housing["total_bedrooms"].median()
+    ## 将缺失值 设置为某个值 (零  均值  中位数) 0, data.mean(), median
+    sample_incomplete_rows["total_bedrooms"].fillna(median, inplace=True)
+    print("line = 361  sample_incomplete_rows \n", sample_incomplete_rows, "\n")
+
+    ##  使用imputer 处理缺失值
+    # 创建了一个实例  并指定使用中位数替换缺失值
+    #  median 为 total_bedrooms 的中值 在上一个cell 中已经计算出来 这里直接用
+    imputer = Imputer(strategy="median")
+
+    # 移除 ocean_proximity 的数据副本 即把这一列去掉
+    housing_num = housing.drop('ocean_proximity', axis=1)
+
+    # 使用 fit 将imputer 实例 fit 到训练数据
+    imputer.fit(housing_num)
+    ## 打印 imputer 中计算的中位数
+    print("line = 374 imputer.statistics_ \n", imputer.statistics_, "\n")
+
+    ## 打印 原始数据的 中位数
+    print("line = 377 housing_num.media().values \n", housing_num.median().values, "\n")
+
+
+    ## 使用 训练好的 imputer 通过学习的中位数 替换缺失值对 训练集进行转换
+    X = imputer.transform(housing_num)
+    ## 将转换后的numpy 数组 放回 pandas dataFrame
+    housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=list(housing.index.values))
+    print("line = 384",housing_tr.loc[sample_incomplete_rows.index.values])
+
+    print("line = 303",imputer.strategy)
 #
 #     housing_tr = pd.DataFrame(X, columns=housing_num.columns)
 #     print("line = 306", housing.head())
