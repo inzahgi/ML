@@ -64,23 +64,27 @@ IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "..\\images", CHAPTER_ID)
 ##设置随机种子数  每次保证初始化一样
 np.random.seed(42)
 
-
+##  列索引
 rooms_ix, bedrooms_ix, population_ix, household_ix = 3, 4, 5, 6
+##  定制转换器
 class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
     def __init__(self, add_bedrooms_per_room=True):
         self.add_bedrooms_per_room = add_bedrooms_per_room
     def fit(self, X, y=None):
         return self
     def transform(self, X, y=None):
+        ##  每个屋子的平均房间数
         rooms_per_household = X[:, rooms_ix] / X[:, household_ix]
+        ##  每个家庭的平均人数
         population_per_household = X[:, population_ix] / X[:, household_ix]
+        ##  计算每个房间的平均床数
         if self.add_bedrooms_per_room:
             bedrooms_per_rooms = X[:, bedrooms_ix] / X[:, rooms_ix]
             return np.c_[X, rooms_per_household, population_per_household, bedrooms_per_rooms]
         else:
             return np.c_[X, rooms_per_household, population_per_household]
 
-
+##  原始数据转换选择器   选择 数值列还是 文字类别列
 class OldDataFrameSelector(BaseEstimator, TransformerMixin):
     def __init__(self, attribute_names):
         self.attribute_names = attribute_names
@@ -381,275 +385,280 @@ if __name__ == '__main__':
     X = imputer.transform(housing_num)
     ## 将转换后的numpy 数组 放回 pandas dataFrame
     housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=list(housing.index.values))
-    print("line = 384",housing_tr.loc[sample_incomplete_rows.index.values])
+    print("line = 384 housing_tr \n",housing_tr.loc[sample_incomplete_rows.index.values], "\n")
+    print("line = 385 imputer.strategy \n", imputer.strategy, "\n")
+    ##   全量转换数据
+    housing_tr = pd.DataFrame(X, columns=housing_num.columns)
+    print("line = 388 housing.head \n", housing.head(), "\n")
 
-    print("line = 303",imputer.strategy)
-#
-#     housing_tr = pd.DataFrame(X, columns=housing_num.columns)
-#     print("line = 306", housing.head())
-#
-#     ## 打印文字属性
-#     housing_cat = housing[['ocean_proximity']]
-#     print("line = 309", housing_cat.head(10))
-#
-#     ##将文字标签转换为 数字
-#     encoder = LabelEncoder()
-#     housing_cat = housing["ocean_proximity"]
-#     housing_cat_encoded = encoder.fit_transform(housing_cat)
-#     print("line = 316", housing_cat_encoded)
-#     print("line = 318", encoder.classes_)
-#
-#     ## oneHot编码
-#     encoder = OneHotEncoder()
-#     housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1,1))
-#     print("line = 323", housing_cat_1hot)
-#
-#     print("line = 325", housing_cat_1hot.toarray())
-#
-#     ## 使用labelBinarizer 一次完成这两种转换
-#
-#     encoder = LabelBinarizer()
-#     housing_cat_1hot = encoder.fit_transform(housing_cat)
-#     print("line = 333", housing_cat_1hot)
-#
-#     attr_adder = CombinedAttributesAdder(add_bedrooms_per_room=False)
-#     housing_extra_attribs = attr_adder.transform(housing.values)
-#
-#     housing_extra_attribs = pd.DataFrame(
-#         housing_extra_attribs,
-#         columns=list(housing.columns)+["rooms_per_household", "population_per_househlod"])
-#     print("line = 358",housing_extra_attribs.head())
-#
-#
-#
-#     num_pipeline = Pipeline([
-#         ('imputer', Imputer(strategy="median")),
-#         ('attribs_addr', CombinedAttributesAdder()),
-#         ('std_scaler', StandardScaler()),
-#     ])
-#
-#     housing_num_tr = num_pipeline.fit_transform(housing_num)
-#     print("line = 371", housing_num_tr)
-#
-#
-#     num_attribs = list(housing_num)
-#     cat_attribs = ["ocean_proximity"]
-#     full_pipeline = ColumnTransformer([
-#         ("num", num_pipeline, num_attribs),
-#         ("cat", OneHotEncoder(), cat_attribs),
-#     ])
-#     housing_prepared = full_pipeline.fit_transform(housing)
-#     print("line = 382", housing_prepared)
-#     print("line = 383", housing_prepared.shape)
-#
-#
-#     ## 将数值pipeline 和 分类pipeline 转换连接到 单个pipeline 上面
-#
-#     # 数字属性
-#     num_attribs = list(housing_num)
-#     # 分类属性
-#     cat_attribs = ["ocean_proximity"]
-#
-#     ##定义数字属性 的 pipeline
-#     old_num_pipeline = Pipeline([
-#         ('selector', OldDataFrameSelector(num_attribs)),
-#         ('imputer', Imputer(strategy="median")),
-#         ('attribs_adder', CombinedAttributesAdder()),
-#         ('std_scaler', StandardScaler()),
-#     ])
-#
-#     old_cat_pipeline = Pipeline([
-#         ('selector', OldDataFrameSelector(cat_attribs)),
-#         ('cat_encoder', OneHotEncoder(sparse=False)),
-#     ])
-#
-#     old_full_pipeline = FeatureUnion(transformer_list=[
-#         ("num_pipeline", old_num_pipeline),
-#         ("cat_pipeline", old_cat_pipeline),
-#     ])
-#
-#     old_housing_prepared = old_full_pipeline.fit_transform(housing)
-#     print("line = 421", old_housing_prepared)
-#     print("line = 422", np.allclose(housing_prepared, old_housing_prepared))
-#
-#
-# ## 选择模型并进行训练
-#     # 训练一个线性回归模型
-#     lin_reg = LinearRegression()
-#     lin_reg.fit(housing_prepared, housing_labels)
-#
-#     some_data = housing.iloc[:5]
-#     some_labels = housing_labels.iloc[:5]
-#     some_data_prepared = full_pipeline.transform(some_data)
-#
-#     print("Predictions: ", lin_reg.predict(some_data_prepared))
-#     ## 与实际值比较
-#     print("Labels:\t", list(some_labels))
-#     print("line = 438", some_data_prepared)
-#
-#     ## 使用 mean_squared_error 函数 在整个训练集测量 这个回归模型的RMSE
-#     housing_predictions = lin_reg.predict(housing_prepared)
-#     lin_mse = mean_squared_error(housing_labels, housing_predictions)
-#     lin_rmse = np.sqrt(lin_mse)
-#     print("line = 444", lin_rmse)
-#
-#     tree_reg = DecisionTreeRegressor()
-#     tree_reg.fit(housing_prepared, housing_labels)
-#
-#     housing_predictions = tree_reg.predict(housing_prepared)
-#     tree_mse = mean_squared_error(housing_labels, housing_predictions)
-#     tree_rmse = np.sqrt(tree_mse)
-#     print("line = 454", tree_rmse)
-#
-#
-#     ## 使用交叉验证进行评估
-#     scores = cross_val_score(tree_reg, housing_prepared, housing_labels,
-#                              scoring="neg_mean_squared_error", cv=10)
-#     tree_rmse_scores = np.sqrt(-scores)
-#
-#     ## 显示结果
-#     display_scores(tree_rmse_scores)
-#
-#     ## 显示用线性回归模型 的得分结果
-#     lin_scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
-#                                  scoring="neg_mean_squared_error", cv=10)
-#     lin_rmse_scores = np.sqrt(-lin_scores)
-#     display_scores(lin_rmse_scores)
-#
-#     ## 随机森林
-#     forest_reg = RandomForestRegressor(random_state=42)
-#     forest_reg.fit(housing_prepared, housing_labels)
-#
-#     housing_predictions = forest_reg.predict(housing_prepared)
-#     forest_mse = mean_squared_error(housing_labels, housing_predictions)
-#     forest_rmse = np.sqrt(forest_mse)
-#     print("line = 489", forest_rmse)
-#
-#
-#     forest_scores = cross_val_score(forest_reg, housing_prepared, housing_labels,
-#                                     scoring="neg_mean_squared_error", cv=10)
-#     forest_rmse_scores = np.sqrt(-forest_scores)
-#     display_scores(forest_rmse_scores)
-#
-#     scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
-#                              scoring="neg_mean_squared_error", cv=10)
-#     print("line = 499", pd.Series(np.sqrt(-scores)).describe())
-#
-#     ## 支持向量机
-#     svm_reg = SVR(kernel="linear")
-#     svm_reg.fit(housing_prepared, housing_labels)
-#     housing_predictions = svm_reg.predict(housing_prepared)
-#     svm_mse = mean_squared_error(housing_labels, housing_predictions)
-#     svm_rmse = np.sqrt(svm_mse)
-#     print("line = 509", svm_rmse)
-#
-#
-#
-# ##  Grid Search 网格搜索
-#
-#     param_grid = [
-#         {'n_estimators':[3, 10, 30], 'max_features':[2, 4, 6, 8]},
-#         {'bootstrap': [False], 'n_estimators':[3, 10], 'max_features':[2, 3, 4]},
-#     ]
-#
-#     forest_reg = RandomForestRegressor(random_state=42)
-#     grid_search = GridSearchCV(forest_reg,
-#                                param_grid,
-#                                cv=5,
-#                                scoring='neg_mean_squared_error',
-#                                return_train_score=True)
-#     grid_search.fit(housing_prepared, housing_labels)
-#     print("line = 528", grid_search.best_params_)
-#     print("line = 529", grid_search.best_estimator_)
-#
-#     cvres = grid_search.cv_results_
-#
-#     for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
-#         print(np.sqrt(-mean_score), params)
-#
-#     print("line = 536", pd.DataFrame(grid_search.cv_results_))
-#
-#
-#     ## Randomized Search 随机搜索
-#
-#     param_distribs = {
-#         'n_estimators': randint(low=1, high=200),
-#         'max_features': randint(low=1, high=8),
-#     }
-#
-#     forest_reg = RandomForestRegressor(random_state=42)
-#     rnd_search = RandomizedSearchCV(forest_reg, param_distributions=param_distribs,
-#                                         n_iter=10, cv=5, scoring='neg_mean_squared_error', random_state=42)
-#     rnd_search.fit(housing_prepared, housing_labels)
-#
-#     cvres = rnd_search.cv_results_
-#     for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
-#         print(np.sqrt(-mean_score), params)
-#
-#
-#
-# ## 分析最佳模型及其错误
-#
-#     feature_importances = grid_search.best_estimator_
-#     print("line = 564", feature_importances)
-#
-#     extra_attribs = ["rooms_per_hhold", "pop_per_hhold", "bedrooms_per_room"]
-#     cat_encoder = full_pipeline.named_transformers_["cat"]
-#     cat_one_attribs = list(cat_encoder.categories_[0])
-#     attributes = num_attribs + extra_attribs + cat_one_attribs
-#
-#     print("line = 577", attributes)
-#     ##print("line = 570 ", sorted(zip(feature_importances, attributes), reverse=True))
-#     ##sorted(zip(feature_importances, attributes), reverse=True)
-#
-#
-#     ## 在测试集上 测试模型
-#     final_model = grid_search.best_estimator_
-#     X_test = strat_test_set.drop("median_house_value", axis=1)
-#     y_test = strat_test_set["median_house_value"].copy()
-#
-#     X_test_prepared = full_pipeline.transform(X_test)
-#     final_predictions = final_model.predict(X_test_prepared)
-#
-#     final_mse = mean_squared_error(y_test, final_predictions)
-#     final_rmse = np.sqrt(final_mse)
-#     print("line = 582 ", final_rmse)
-#
-#
-#     confidence = 0.95
-#     squared_errors = (final_predictions - y_test) ** 2
-#     mean = squared_errors.mean()
-#     m = len(squared_errors)
-#
-#     np.sqrt(stats.t.interval(confidence, m - 1,
-#                              loc=np.mean(squared_errors),
-#                              scale=stats.sem(squared_errors)))
-#     # 手动计算间隔
-#     tscore = stats.t.ppf((1 + confidence) /2, df= m -1)
-#     tmargin = tscore * squared_errors.std(ddof=1)/np.sqrt(m)
-#     np.sqrt(mean - tmargin), np.sqrt(mean + tmargin)
-#
-#     # 使用z分数 而不是t分数
-#     zscore = stats.norm.ppf((1 + confidence) / 2)
-#     zmargin = zscore * squared_errors.std(ddof=1) / np.sqrt(m)
-#     np.sqrt(mean - zmargin), np.sqrt(mean + zmargin)
-#
-#     full_pipeline_with_predictor = Pipeline([
-#         ("preparation", full_pipeline),
-#         ("linear", LinearRegression())
-#     ])
-#
-#     full_pipeline_with_predictor.fit(housing, housing_labels)
-#     full_pipeline_with_predictor.predict(some_data)
-#
-#     my_model = full_pipeline_with_predictor
-#
-#     joblib.dump(my_model, "my_model.pkl")
-#     my_model_loaded = joblib.load("my_model.pkl")
-#
-#     geom_distrib = geom(0.5).rvs(10000, random_state=42)
-#     expon_distrib = expon(scale=1).rvs(10000, random_state=42)
-#     plt.hist(geom_distrib, bins=50)
-#     plt.show()
-#     plt.hist(expon_distrib, bins=50)
-#     plt.show()
+    ## 打印文字属性
+    housing_cat = housing[['ocean_proximity']]
+    print("line = 392 housing_cat.head() \n", housing_cat.head(10), "\n")
+
+    ##将文字标签转换为 数字
+    encoder = LabelEncoder()
+    housing_cat = housing["ocean_proximity"]
+    housing_cat_encoded = encoder.fit_transform(housing_cat)
+    print("line = 398  ocean_proximity housing_cat_encoded\n", housing_cat_encoded, "\n")
+    print("line = 399 ocean label \n", encoder.classes_, "\n")
+
+    ## oneHot编码
+    encoder = OneHotEncoder()
+    housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1,1))
+    print("line = 404 housing_cat_hot \n", housing_cat_1hot, "\n")
+    print("line = 405 husing_cat_1hot.toarray()", housing_cat_1hot.toarray())
+
+    ## 使用labelBinarizer 一次完成这两种转换
+    encoder = LabelBinarizer()
+    housing_cat_1hot = encoder.fit_transform(housing_cat)
+    print("line = 410 housing_cat_1hot \n", housing_cat_1hot, "\n")
+
+    ##  定制转换器  添加 每个屋子 平均房间数 和 平均人数
+    attr_adder = CombinedAttributesAdder(add_bedrooms_per_room=False)
+    housing_extra_attribs = attr_adder.transform(housing.values)
+    ##  将 新增的列 添加到dataFrame中
+    housing_extra_attribs = pd.DataFrame(
+        housing_extra_attribs,
+        columns=list(housing.columns)+["rooms_per_household", "population_per_househlod"])
+    print("line = 423 housing_extra_attribs.head() \n",housing_extra_attribs.head(), "\n")
+
+
+
+##  transformation pipelines
+    num_pipeline = Pipeline([
+        ('imputer', Imputer(strategy="median")),
+        ('attribs_addr', CombinedAttributesAdder()),
+        ('std_scaler', StandardScaler()),
+    ])
+    ##  数值属性的 小型 pipeline
+    housing_num_tr = num_pipeline.fit_transform(housing_num)
+    print("line = 435 housing_num_tr \n", housing_num_tr, "\n")
+
+    ##  将housing_num 转换为 列表
+    num_attribs = list(housing_num)
+    cat_attribs = ["ocean_proximity"]
+    full_pipeline = ColumnTransformer([
+        ("num", num_pipeline, num_attribs),
+        ("cat", OneHotEncoder(), cat_attribs),
+    ])
+    # 将housing 的ocean_proximity 标签 编码
+    housing_prepared = full_pipeline.fit_transform(housing)
+    print("line = 446 housing_prepared \n", housing_prepared, "\n")
+    print("line = 447 housing_prepared.shape = ", housing_prepared.shape, "\n")
+
+
+    ## 将数值pipeline 和 分类pipeline 转换连接到 单个pipeline 上面
+
+    # 数字属性
+    num_attribs = list(housing_num)
+    # 分类属性
+    cat_attribs = ["ocean_proximity"]
+
+    ##定义数字属性 的 pipeline
+    old_num_pipeline = Pipeline([
+        ('selector', OldDataFrameSelector(num_attribs)),
+        ('imputer', Imputer(strategy="median")),
+        ('attribs_adder', CombinedAttributesAdder()),
+        ('std_scaler', StandardScaler()),
+    ])
+    ##  定义分类属性的pipeline
+    old_cat_pipeline = Pipeline([
+        ('selector', OldDataFrameSelector(cat_attribs)),
+        ('cat_encoder', OneHotEncoder(sparse=False)),
+    ])
+    ##   数值和文本综合pipeline
+    old_full_pipeline = FeatureUnion(transformer_list=[
+        ("num_pipeline", old_num_pipeline),
+        ("cat_pipeline", old_cat_pipeline),
+    ])
+
+    old_housing_prepared = old_full_pipeline.fit_transform(housing)
+    print("line = 476 old_housing_prepared \n", old_housing_prepared, "\n")
+    print("line = 477 housing_prepared and old_housing_prepared is same:",
+          np.allclose(housing_prepared, old_housing_prepared), "\n")
+
+
+## 选择模型并进行训练
+    # 训练一个线性回归模型
+    lin_reg = LinearRegression()
+    lin_reg.fit(housing_prepared, housing_labels)
+    ##  取前5个数字
+    some_data = housing.iloc[:5]
+    ##  取前5个的标签
+    some_labels = housing_labels.iloc[:5]
+    ##  将部分数据 进行标准化转换
+    some_data_prepared = full_pipeline.transform(some_data)
+
+    print("line = 492 Predictions:\t", lin_reg.predict(some_data_prepared))
+    ## 与实际值比较  相差比较大
+    print("line = 494 Labels:\t", list(some_labels))
+    print("line = 495 some_data_prepared", some_data_prepared)
+
+    ## 使用 mean_squared_error 函数 在整个训练集测量 这个回归模型的RMSE
+    housing_predictions = lin_reg.predict(housing_prepared)
+    lin_mse = mean_squared_error(housing_labels, housing_predictions)
+    lin_rmse = np.sqrt(lin_mse)
+    print("line = 501 lin_rmse =\t", lin_rmse)
+
+    ##  训练 决策树
+    tree_reg = DecisionTreeRegressor()
+    tree_reg.fit(housing_prepared, housing_labels)
+
+    housing_predictions = tree_reg.predict(housing_prepared)
+    tree_mse = mean_squared_error(housing_labels, housing_predictions)
+    tree_rmse = np.sqrt(tree_mse)
+    print("line = 510 tree_rmse=\t", tree_rmse)
+
+
+    ## 使用交叉验证进行评估 cv=10  随机分成10个子集 每次在9个子集训练 剩下的1个子集评估
+    scores = cross_val_score(tree_reg, housing_prepared, housing_labels,
+                             scoring="neg_mean_squared_error", cv=10)
+    tree_rmse_scores = np.sqrt(-scores)
+
+    ## 显示结果
+    display_scores(tree_rmse_scores)
+
+    ## 显示用线性回归模型 的得分结果
+    lin_scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
+                                 scoring="neg_mean_squared_error", cv=10)
+    lin_rmse_scores = np.sqrt(-lin_scores)
+    display_scores(lin_rmse_scores)
+
+    ## 随机森林
+    forest_reg = RandomForestRegressor(random_state=42)
+    forest_reg.fit(housing_prepared, housing_labels)
+    #  rmse 评估训练结果
+    housing_predictions = forest_reg.predict(housing_prepared)
+    forest_mse = mean_squared_error(housing_labels, housing_predictions)
+    forest_rmse = np.sqrt(forest_mse)
+    print("line = 534 forest_rmse = \t", forest_rmse)
+
+    ##  随机深林进行交叉验证
+    forest_scores = cross_val_score(forest_reg, housing_prepared, housing_labels,
+                                    scoring="neg_mean_squared_error", cv=10)
+    forest_rmse_scores = np.sqrt(-forest_scores)
+    display_scores(forest_rmse_scores)
+
+    scores = cross_val_score(lin_reg, housing_prepared, housing_labels,
+                             scoring="neg_mean_squared_error", cv=10)
+    print("line = 544 forest scores cross_val_score = \t", pd.Series(np.sqrt(-scores)).describe())
+
+    ## 支持向量机
+    svm_reg = SVR(kernel="linear")
+    svm_reg.fit(housing_prepared, housing_labels)
+    housing_predictions = svm_reg.predict(housing_prepared)
+    svm_mse = mean_squared_error(housing_labels, housing_predictions)
+    svm_rmse = np.sqrt(svm_mse)
+    print("line = 552 svm_rmse = \t", svm_rmse)
+
+
+
+##  Grid Search 网格搜索
+    ##
+    param_grid = [
+        {'n_estimators':[3, 10, 30], 'max_features':[2, 4, 6, 8]},
+        {'bootstrap': [False], 'n_estimators':[3, 10], 'max_features':[2, 3, 4]},
+    ]
+
+    forest_reg = RandomForestRegressor(random_state=42)
+    grid_search = GridSearchCV(forest_reg,
+                               param_grid,
+                               cv=5,
+                               scoring='neg_mean_squared_error',
+                               return_train_score=True)
+    grid_search.fit(housing_prepared, housing_labels)
+    print("line = 570 grid_search.best_params = \t", grid_search.best_params_)
+    print("line = 571 grid_search.best_estimator = \t", grid_search.best_estimator_)
+
+    cvres = grid_search.cv_results_
+
+    for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+        print(np.sqrt(-mean_score), params)
+
+    print("line = 578 grid_search.cv_results_", pd.DataFrame(grid_search.cv_results_))
+
+
+    ## Randomized Search 随机搜索
+
+    param_distribs = {
+        'n_estimators': randint(low=1, high=200),
+        'max_features': randint(low=1, high=8),
+    }
+
+    forest_reg = RandomForestRegressor(random_state=42)
+    rnd_search = RandomizedSearchCV(forest_reg, param_distributions=param_distribs,
+                                        n_iter=10, cv=5, scoring='neg_mean_squared_error', random_state=42)
+    rnd_search.fit(housing_prepared, housing_labels)
+
+    cvres = rnd_search.cv_results_
+    for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+        print(np.sqrt(-mean_score), params)
+
+
+
+## 分析最佳模型及其错误
+
+    feature_importances = grid_search.best_estimator_
+    print("line = 602 feature_importances = \t", feature_importances)
+
+    extra_attribs = ["rooms_per_hhold", "pop_per_hhold", "bedrooms_per_room"]
+    cat_encoder = full_pipeline.named_transformers_["cat"]
+    cat_one_attribs = list(cat_encoder.categories_[0])
+    attributes = num_attribs + extra_attribs + cat_one_attribs
+
+    print("line = 609 attributes = \t", attributes)
+    ###print("line = 610  ", sorted(zip(feature_importances, attributes), reverse=True))
+    sorted(zip(feature_importances, attributes), reverse=True)
+
+
+    ## 在测试集上 测试模型
+    final_model = grid_search.best_estimator_
+    X_test = strat_test_set.drop("median_house_value", axis=1)
+    y_test = strat_test_set["median_house_value"].copy()
+
+    X_test_prepared = full_pipeline.transform(X_test)
+    final_predictions = final_model.predict(X_test_prepared)
+
+    final_mse = mean_squared_error(y_test, final_predictions)
+    final_rmse = np.sqrt(final_mse)
+    print("line = 624 final_rmse = \t ", final_rmse)
+
+    ##  置信区间设为 95%
+    confidence = 0.95
+    squared_errors = (final_predictions - y_test) ** 2
+    mean = squared_errors.mean()
+    m = len(squared_errors)
+
+    print("line = 632 rmse of 95% confidence = \t", np.sqrt(stats.t.interval(confidence, m - 1,
+                             loc=np.mean(squared_errors),
+                             scale=stats.sem(squared_errors))))
+    # 手动计算间隔
+    tscore = stats.t.ppf((1 + confidence) /2, df= m -1)
+    tmargin = tscore * squared_errors.std(ddof=1)/np.sqrt(m)
+    print("line = 638 calculate rmse of 95% confidence = \t", np.sqrt(mean - tmargin), np.sqrt(mean + tmargin))
+
+    # 使用z分数 而不是t分数
+    zscore = stats.norm.ppf((1 + confidence) / 2)
+    zmargin = zscore * squared_errors.std(ddof=1) / np.sqrt(m)
+    print("lie = 643 z score = \t", np.sqrt(mean - zmargin), np.sqrt(mean + zmargin))
+
+    ##  完整管道
+    full_pipeline_with_predictor = Pipeline([
+        ("preparation", full_pipeline),
+        ("linear", LinearRegression())
+    ])
+
+    full_pipeline_with_predictor.fit(housing, housing_labels)
+    full_pipeline_with_predictor.predict(some_data)
+
+    my_model = full_pipeline_with_predictor
+    ##  训练结果 持久化
+    joblib.dump(my_model, "my_model.pkl")
+    my_model_loaded = joblib.load("my_model.pkl")
+
+    geom_distrib = geom(0.5).rvs(10000, random_state=42)
+    expon_distrib = expon(scale=1).rvs(10000, random_state=42)
+    plt.hist(geom_distrib, bins=50)
+    plt.show()
+    plt.hist(expon_distrib, bins=50)
+    plt.show()
