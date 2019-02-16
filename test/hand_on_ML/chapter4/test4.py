@@ -202,63 +202,64 @@ if __name__ == '__main__':
             ## 获取前后 训练数据
             xi = X_b[random_index:random_index+1]
             yi = y[random_index:random_index+1]
+            ## 训练 梯度下降算法
             gradients = 2*xi.T.dot(xi.dot(theta)-yi)
             eta=learning_schedule(epoch*m+i)
             theta=theta-eta*gradients
             theta_path_sgd.append(theta)
-
+    ## 画出梯度收敛
     plt.plot(X, y, "b.")
     plt.xlabel("$x_1$", fontsize=18)
     plt.ylabel("$y$", rotation=0, fontsize=18)
     plt.axis([0, 2, 0, 15])
-    ##save_fig("sgd_plot")
-    ##plt.show()
+    save_fig("sgd_plot")
+    plt.show()
+    ##  最后收敛的 theta值
+    print("line = 218", theta)
+    ##  使用随机梯度下降算法 训练
+    sgd_reg=SGDRegressor(n_iter=50, penalty=None, eta0=0.1)
+    sgd_reg.fit(X, y.ravel())
 
-#     print("line = 151", theta)
-#
-#     sgd_reg=SGDRegressor(n_iter=50, penalty=None, eta0=0.1)
-#     sgd_reg.fit(X, y.ravel())
-#
-#     print("line = 157", sgd_reg.intercept_, sgd_reg.coef_)
-#
-#     theta_path_mgd = []
-#     n_iterations = 50
-#     minibatch_size = 20
-#
-#     np.random.seed(42)
-#     theta = np.random.randn(2, 1)
-#
-#     t0,t1 = 200, 1000
-#
-#     t=0
-#     for epoch in range(n_iterations):
-#         shuffled_indices = np.random.permutation(m)
-#         X_b_shuffled = X_b[shuffled_indices]
-#         y_shuffled = y[shuffled_indices]
-#         for i in range(0,m, minibatch_size):
-#             t += 1
-#             xi = X_b_shuffled[i:i+minibatch_size]
-#             yi = y_shuffled[i:i+minibatch_size]
-#             gradients = 2/minibatch_size * xi.T.dot(xi.dot(theta) - yi)
-#             eta = learning_schedule(t)
-#             theta = theta - eta * gradients
-#             theta_path_mgd.append(theta)
-#
-#     print("line = 182", theta)
-#     theta_path_bgd = np.array(theta_path_bgd)
-#     theta_path_sgd = np.array(theta_path_sgd)
-#     theta_path_mgd = np.array(theta_path_mgd)
-#
-#     plt.figure(figsize=(7, 4))
-#     plt.plot(theta_path_sgd[:,0], theta_path_sgd[:, 1], "r-s", linewidth=1, label="Stochastic")
-#     plt.plot(theta_path_mgd[:,0], theta_path_mgd[:, 1], "g-+", linewidth=2, label="Mini-batch")
-#     plt.plot(theta_path_bgd[:,0], theta_path_bgd[:, 1], "b-o", linewidth=3, label="Batch")
-#     plt.legend(loc="upper left", fontsize=16)
-#     plt.xlabel(r"$\theta_0$", fontsize=20)
-#     plt.ylabel(r"$\theta_1$", fontsize=20, rotation=0)
-#     plt.axis([2.5, 4.5, 2.3, 3.9])
-#     ##save_fig("gradient_descent_path_plot")
-#     ##plt.show()
+    print("line = 223 sgd_reg.intercept = \t", sgd_reg.intercept_, "sgd_reg_coef = \t", sgd_reg.coef_)
+
+##  小批量梯度训练
+    theta_path_mgd = []
+    n_iterations = 50
+    minibatch_size = 20
+
+    np.random.seed(42)
+    theta = np.random.randn(2, 1)  ##  theta 初始值
+
+    t0,t1 = 200, 1000
+    t=0
+    for epoch in range(n_iterations):
+        shuffled_indices = np.random.permutation(m) ##  生成伪随机数组  设置随机种子
+        X_b_shuffled = X_b[shuffled_indices]  ##  打散训练数据
+        y_shuffled = y[shuffled_indices]  ##  打散训练数据标注结果
+        for i in range(0, m, minibatch_size):  ##  小批次迭代循环
+            t += 1
+            xi = X_b_shuffled[i:i+minibatch_size]
+            yi = y_shuffled[i:i+minibatch_size]
+            gradients = 2/minibatch_size * xi.T.dot(xi.dot(theta) - yi)
+            eta = learning_schedule(t)
+            theta = theta - eta * gradients
+            theta_path_mgd.append(theta)
+
+    print("line = 182", theta)
+    theta_path_bgd = np.array(theta_path_bgd)
+    theta_path_sgd = np.array(theta_path_sgd)
+    theta_path_mgd = np.array(theta_path_mgd)
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(theta_path_sgd[:,0], theta_path_sgd[:, 1], "r-s", linewidth=1, label="Stochastic")
+    plt.plot(theta_path_mgd[:,0], theta_path_mgd[:, 1], "g-+", linewidth=2, label="Mini-batch")
+    plt.plot(theta_path_bgd[:,0], theta_path_bgd[:, 1], "b-o", linewidth=3, label="Batch")
+    plt.legend(loc="upper left", fontsize=16)
+    plt.xlabel(r"$\theta_0$", fontsize=20)
+    plt.ylabel(r"$\theta_1$", fontsize=20, rotation=0)
+    plt.axis([2.5, 4.5, 2.3, 3.9])
+    save_fig("gradient_descent_path_plot")
+    plt.show()
 #
 #     m = 100
 #     #X=6*np.random.randn(m, 1) - 3
