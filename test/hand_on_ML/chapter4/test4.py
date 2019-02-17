@@ -73,38 +73,37 @@ def learning_schedule(t):
     return t0/(t+t1)
 
 def plot_learning_curves(model, X, y):
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=10)
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=10) ## 拆分训练集和测试集
     train_errors, val_errors = [], []
     for m in range(1, len(X_train)):
-        model.fit(X_train[:m], y_train[:m])
-        y_train_predict = model.predict(X_train[:m])
-        y_val_predict = model.predict(X_val)
-        train_errors.append(mean_squared_error(y_train[:m], y_train_predict))
-        val_errors.append(mean_squared_error(y_val, y_val_predict))
-
+        model.fit(X_train[:m], y_train[:m])  ## 训练样本
+        y_train_predict = model.predict(X_train[:m]) ## 预测训练集结果
+        y_val_predict = model.predict(X_val)  ##  预测测试集结果
+        train_errors.append(mean_squared_error(y_train[:m], y_train_predict))   ## 计算训练误差
+        val_errors.append(mean_squared_error(y_val, y_val_predict))   ##  计算预测误差
+    ##  绘制误差曲线
     plt.plot(np.sqrt(train_errors), "r-+", linewidth=2, label="train")
     plt.plot(np.sqrt(val_errors), "b-", linewidth=3, label="val")
     plt.legend(loc="upper right", fontsize=14)
     plt.xlabel("Training set size", fontsize=14)
     plt.ylabel("RMSE", fontsize=14)
 
-
+## 画出 线性曲线拟合情况
 def plot_model(model_class, polynomial, alphas, **model_kargs):
     for alpha, style in zip(alphas, ("b--", "g--", "r:")):
         model = model_class(alpha, **model_kargs) if alpha > 0 else LinearRegression()
-        if polynomial:
+        if polynomial:   ## 如果是高阶拟合 设置参数
             model = Pipeline([
                 ("poly_features", PolynomialFeatures(degree=10, include_bias=False)),
                 ("std_scaler", StandardScaler()),
                 ("regul_reg", model),
             ])
-        model.fit(X, y)
-        y_new_regul= model.predict(X_new)
-        lw = 2 if alpha > 0 else 1
-        ##plt.plot(X_new, y_new_regul, style, linewidth=lw, lable=r"$\alpha = {}$".format(alpha))
-        plt.plot(X_new, y_new_regul, style, linewidth=lw, label=r"$\alpha = {}$".format(alpha))
+        model.fit(X, y) ## 训练模型
+        y_new_regul= model.predict(X_new) ## 预测结果
+        lw = 2 if alpha > 0 else 1  ##  正则参数 alpha 大于0时设置为2  默认为1
+        plt.plot(X_new, y_new_regul, style, linewidth=lw, label=r"$\alpha = {}$".format(alpha))  ##  画出拟合曲线
 
-    plt.plot(X, y, "b.", linewidth=3)
+    plt.plot(X, y, "b.", linewidth=3) ##  画出训练数据点
     plt.legend(loc="upper left", fontsize=15)
     plt.xlabel("$x_1$", fontsize=18)
     plt.axis([0, 3, 0, 4])
@@ -334,80 +333,79 @@ if __name__ == '__main__':
         ("poly_features", PolynomialFeatures(degree=10, include_bias=False)),
         ("lin_reg", LinearRegression()),
     ])
-
+    ##  画出多阶回归拟合情况
     plot_learning_curves(polynomial_regression, X, y)
     plt.axis([0, 80, 0, 3])
     plt.title("Figure.4-16")
-    ##save_fig("learning_curves_plot")
-    ##plt.show()
+    save_fig("learning_curves_plot")
+    plt.show()
 
-#     ## 岭回归
-#     np.random.seed(42)
-#     m = 20
-#     X = 3 * np.random.rand(m, 1)
-#     y = 1 + 0.5 * X + np.random.rand(m, 1)/ 1.5
-#     X_new = np.linspace(0, 3, 100).reshape(100, 1)
-#
-#
-#     plt.figure(figsize=(8, 4))
-#     plt.subplot(121)
-#     plt.title('Figure 4-17. Ridge Regression')
-#     plot_model(Ridge, polynomial=False, alphas=(0, 10, 100), random_state=42)
-#     plt.ylabel("$y$", rotation=0, fontsize=18)
-#     plt.subplot(122)
-#     plt.title("Figure 4-17. Ridge Regression")
-#     plot_model(Ridge, polynomial=True, alphas=(0, 10**-5, 1), random_state=42)
-#
-#     ##save_fig("ridge_regression_plot")
-#     ##plt.show()
-#
-#     ## 利用cholesky矩阵分解 得到闭式解
-#     ridge_reg = Ridge(alpha=1, solver="cholesky")
-#     ridge_reg.fit(X, y)
-#     ridge_reg.predict([[1.5]])
-#     ##  超参数 指定为L2 正则
-#     sgd_reg=SGDRegressor(penalty="l2")
-#     sgd_reg.fit(X, y.ravel())
-#     print("line = 351", sgd_reg.predict([[1.5]]))
-#
-#     ##  使用sgd  随机平均梯度算法最小化 有限和
-#     ridge_reg = Ridge(alpha=1, solver="sag", random_state=42)
-#     ridge_reg.fit(X, y)
-#     print("line = 356", ridge_reg.predict([[1.5]]))
-#
-#     plt.figure(figsize=(8, 4))
-#     plt.subplot(121)
-#     plt.title('Figure 4-18. Lasso Regression')
-#     plot_model(Lasso, polynomial=False, alphas=(0, 0.1, 1), random_state=42)
-#     plt.ylabel("$y$", rotation=0, fontsize=18)
-#     plt.subplot(122)
-#     plt.title("Figure 4-18 Lasso Regression")
-#     plot_model(Lasso, polynomial=True, alphas=(0, 10**-7, 1), tol=1, random_state=42)
-#
-#     ##save_fig("lasso_regression_plot")
-#     ##plt.show()
-#
-#
-#
-#     t1a, t1b, t2a, t2b = -1, 3, -1.5, 1.5
-#
-#     t1s = np.linspace(t1a, t1b, 500)
-#     t2s = np.linspace(t1a, t2b, 500)
-#     t1, t2 = np.meshgrid(t1s, t2s)
-#     T = np.c_[t1.ravel(), t2.ravel()]
-#     Xr = np.array([[-1, 1], [-0.3, -1], [1, 0.1]])
-#     yr = 2 * Xr[:, :1] + 0.5 * Xr[:, 1:]
-#
-#     J = (1/len(Xr) * np.sum((T.dot(Xr.T) - yr.T)**2, axis=1)).reshape(t1.shape)
-#
-#     N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)
-#     N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)
-#
-#     t_min_idx = np.unravel_index(np.argmin(J), J.shape)
-#     t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]
-#
-#     t_init = np.array([[0.25], [-1]])
-#
+    ## 岭回归
+    np.random.seed(42)
+    m = 20
+    X = 3 * np.random.rand(m, 1)
+    y = 1 + 0.5 * X + np.random.rand(m, 1)/ 1.5
+    X_new = np.linspace(0, 3, 100).reshape(100, 1)
+
+
+    plt.figure(figsize=(8, 4))
+    plt.subplot(121)
+    plt.title('Figure 4-17. Ridge Regression')
+    plot_model(Ridge, polynomial=False, alphas=(0, 10, 100), random_state=42) ## 画出一阶拟合曲线
+    plt.ylabel("$y$", rotation=0, fontsize=18)
+    plt.subplot(122)
+    plt.title("Figure 4-17. Ridge Regression")
+    plot_model(Ridge, polynomial=True, alphas=(0, 10**-5, 1), random_state=42) ## 画出多阶拟合曲线
+
+    save_fig("ridge_regression_plot")
+    plt.show()
+
+    ## 利用cholesky矩阵分解 得到闭式解
+    ridge_reg = Ridge(alpha=1, solver="cholesky")
+    ridge_reg.fit(X, y)
+    ridge_reg.predict([[1.5]])
+    ##  超参数 指定为L2 正则
+    sgd_reg=SGDRegressor(penalty="l2")
+    sgd_reg.fit(X, y.ravel())
+    print("line = 370 sgd_reg.predict([[1.5]]) = \t", sgd_reg.predict([[1.5]]))
+
+    ##  使用sgd  随机平均梯度算法最小化 有限和
+    ridge_reg = Ridge(alpha=1, solver="sag", random_state=42)
+    ridge_reg.fit(X, y)
+    print("line = 375 ridge_reg.predict([[1.5]]) = \t", ridge_reg.predict([[1.5]]))
+    ##  画出一阶和高阶 的 lasso 线性回归拟合曲线
+    plt.figure(figsize=(8, 4))
+    plt.subplot(121)
+    plt.title('Figure 4-18. Lasso Regression')
+    plot_model(Lasso, polynomial=False, alphas=(0, 0.1, 1), random_state=42)
+    plt.ylabel("$y$", rotation=0, fontsize=18)
+    plt.subplot(122)
+    plt.title("Figure 4-18 Lasso Regression")
+    plot_model(Lasso, polynomial=True, alphas=(0, 10**-7, 1), tol=1, random_state=42)
+
+    save_fig("lasso_regression_plot")
+    plt.show()
+
+
+    t1a, t1b, t2a, t2b = -1, 3, -1.5, 1.5
+    ##  生成训练数据
+    t1s = np.linspace(t1a, t1b, 500)
+    t2s = np.linspace(t1a, t2b, 500)
+    t1, t2 = np.meshgrid(t1s, t2s)
+    T = np.c_[t1.ravel(), t2.ravel()]
+    Xr = np.array([[-1, 1], [-0.3, -1], [1, 0.1]])
+    yr = 2 * Xr[:, :1] + 0.5 * Xr[:, 1:]
+
+    J = (1/len(Xr) * np.sum((T.dot(Xr.T) - yr.T)**2, axis=1)).reshape(t1.shape)
+
+    N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)
+    N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)
+
+    t_min_idx = np.unravel_index(np.argmin(J), J.shape)
+    t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]
+
+    t_init = np.array([[0.25], [-1]])
+
 #     plt.figure(figsize=(10, 6))
 #     for i, N, l1, l2, title in ((0, N1, 0.5, 0, "Lasso"), (1, N2, 0, 0.1, "Ridge")):
 #         JR = J + l1 * N1 + l2 * N2**2
