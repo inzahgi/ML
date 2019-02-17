@@ -67,7 +67,7 @@ def plot_gradient_descent(theta, eta, theta_path=None):
     plt.axis([0, 2, 0, 15])
     plt.title(r"$\eta = {}$".format(eta), fontsize=16)
 
-
+##  按照学习计划  跟新学习率
 t0, t1 = 5, 50
 def learning_schedule(t):
     return t0/(t+t1)
@@ -238,18 +238,19 @@ if __name__ == '__main__':
         y_shuffled = y[shuffled_indices]  ##  打散训练数据标注结果
         for i in range(0, m, minibatch_size):  ##  小批次迭代循环
             t += 1
-            xi = X_b_shuffled[i:i+minibatch_size]
+            xi = X_b_shuffled[i:i+minibatch_size] ## 取新的小批次
             yi = y_shuffled[i:i+minibatch_size]
-            gradients = 2/minibatch_size * xi.T.dot(xi.dot(theta) - yi)
-            eta = learning_schedule(t)
-            theta = theta - eta * gradients
-            theta_path_mgd.append(theta)
+            gradients = 2/minibatch_size * xi.T.dot(xi.dot(theta) - yi)  ##  求当前梯度
+            eta = learning_schedule(t) ##  跟新学习速率
+            theta = theta - eta * gradients ##  更新theta
+            theta_path_mgd.append(theta)  ##  保存theta
 
-    print("line = 182", theta)
+    print("line = 248 theta = \t", theta)
+    ##  批量梯度下降 随机梯度下降 小批量梯度下降的 训练过程
     theta_path_bgd = np.array(theta_path_bgd)
     theta_path_sgd = np.array(theta_path_sgd)
     theta_path_mgd = np.array(theta_path_mgd)
-
+    ##  绘制三种梯度下降
     plt.figure(figsize=(7, 4))
     plt.plot(theta_path_sgd[:,0], theta_path_sgd[:, 1], "r-s", linewidth=1, label="Stochastic")
     plt.plot(theta_path_mgd[:,0], theta_path_mgd[:, 1], "g-+", linewidth=2, label="Mini-batch")
@@ -260,85 +261,86 @@ if __name__ == '__main__':
     plt.axis([2.5, 4.5, 2.3, 3.9])
     save_fig("gradient_descent_path_plot")
     plt.show()
-#
-#     m = 100
-#     #X=6*np.random.randn(m, 1) - 3
-#     X = 6 * np.random.rand(m, 1) - 3
-#     y = 0.5 * X ** 2 + X + 2 + np.random.randn(m, 1)
-#     #y=0.5*X**2 + X + 2 + np.random.randn(m, 1)
-#
-#     plt.plot(X, y, "b.")
-#     plt.title("Figure 4-12. Generated nonlinear and noisy dataset")
-#     plt.xlabel("$x_1$", fontsize=18)
-#     plt.ylabel("$y$", rotation=0, fontsize=18)
-#     plt.axis([-3, 3, 0, 10])
-#     ##save_fig("quadratic_data_plot")
-#     ##plt.show()
-#
-#     poly_features = PolynomialFeatures(degree=2, include_bias=False)
-#     X_poly=poly_features.fit_transform(X)
-#     print("line = 215", X[0])
-#     print("line = 216", X_poly[0])
-#
-#
-#     lin_reg=LinearRegression()
-#     lin_reg.fit(X_poly, y)
-#     print("line = 221",lin_reg.intercept_, lin_reg.coef_)
-#
-#     X_new = np.linspace(-3, 3, 100).reshape(100, 1)
-#     X_new_poly = poly_features.transform(X_new)
-#     y_new = lin_reg.predict(X_new_poly)
-#     plt.plot(X, y, "b.")
-#     plt.title("Figure 4-13. Polynomial Regression model predictions")
-#     plt.plot(X_new, y_new, "r--", linewidth=2, label="Predictions")
-#     plt.xlabel("$x_1$", fontsize=18)
-#     plt.ylabel("$y$", rotation=0, fontsize=18)
-#     plt.legend(loc="upper left", fontsize=14)
-#     plt.axis([-3, 3, 0, 10])
-#     ##save_fig("quadratic_predictions_plot")
-#     ##plt.show()
-#
-#
-#     for style, width, degree in (("g-", 1, 300), ("b--", 2, 2), ("r-+", 2, 1)):
-#         polybig_features = PolynomialFeatures(degree=degree, include_bias=False)
-#         std_scaler = StandardScaler()
-#         lin_reg = LinearRegression()
-#         polynomial_regression = Pipeline([
-#             ("poly_features", polybig_features),
-#             ("std_scaler", std_scaler),
-#             ("lin_reg", lin_reg),
-#         ])
-#         polynomial_regression.fit(X, y)
-#         y_newbig = polynomial_regression.predict(X_new)
-#         plt.plot(X_new, y_newbig, style, label=str(degree), linewidth=width)
-#
-#     plt.plot(X, y, "b.", linewidth=3)
-#     plt.legend(loc="upper left")
-#     plt.xlabel("$x_1$", fontsize=18)
-#     plt.ylabel("$y$", rotation=0, fontsize=18)
-#     plt.axis([-3, 3, 0, 10])
-#     ##save_fig("high_degree_polynomials_plot")
-#     ##plt.show()
-#
-#
-#     lin_reg = LinearRegression()
-#     plot_learning_curves(lin_reg, X, y)
-#     plt.axis([0, 80, 0, 3])
-#     ##save_fig("underfitting_learning_curves_plot")
-#     ##plt.show()
-#
-#     ##  10次多项式模型的学习曲线
-#     polynomial_regression = Pipeline([
-#         ("poly_features", PolynomialFeatures(degree=10, include_bias=False)),
-#         ("lin_reg", LinearRegression()),
-#     ])
-#
-#     plot_learning_curves(polynomial_regression, X, y)
-#     plt.axis([0, 80, 0, 3])
-#     plt.title("Figure.4-16")
-#     ##save_fig("learning_curves_plot")
-#     ##plt.show()
-#
+
+    np.random.rand(42)
+    m = 100
+    ## 生成随机训练数据
+    X = 6 * np.random.rand(m, 1) - 3
+    ## 生成二次曲线 目标
+    y = 0.5 * X ** 2 + X + 2 + np.random.randn(m, 1)
+    ## 画出随机数据图
+    plt.plot(X, y, "b.")
+    plt.title("Figure 4-12. Generated nonlinear and noisy dataset")
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$y$", rotation=0, fontsize=18)
+    plt.axis([-3, 3, 0, 10])
+    save_fig("quadratic_data_plot")
+    plt.show()
+    ##  利用polynomialFeatures 转换训练数据 添加多维(当前2维) 数据
+    poly_features = PolynomialFeatures(degree=2, include_bias=False)
+    X_poly=poly_features.fit_transform(X)
+    print("line = 282，X[0] = \t", X[0])
+    print("line = 283, X_poly[0] = \t", X_poly[0])
+
+    ##  线性回归训练
+    lin_reg=LinearRegression()
+    lin_reg.fit(X_poly, y)
+    print("line = 288 lin_reg.intercept = \t",lin_reg.intercept_, "\tlin_reg.coef_ = \t",lin_reg.coef_)
+    ##  画出二维训练结果 拟合图
+    X_new = np.linspace(-3, 3, 100).reshape(100, 1)
+    X_new_poly = poly_features.transform(X_new)
+    y_new = lin_reg.predict(X_new_poly)  ##  预测结果
+    plt.plot(X, y, "b.") ##  训练点
+    plt.title("Figure 4-13. Polynomial Regression model predictions")
+    plt.plot(X_new, y_new, "r--", linewidth=2, label="Predictions")
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$y$", rotation=0, fontsize=18)
+    plt.legend(loc="upper left", fontsize=14)
+    plt.axis([-3, 3, 0, 10])
+    save_fig("quadratic_predictions_plot")
+    plt.show()
+
+    ##  训练画出 300阶 2阶 1阶 的训练结果
+    for style, width, degree in (("g-", 1, 300), ("b--", 2, 2), ("r-+", 2, 1)):
+        polybig_features = PolynomialFeatures(degree=degree, include_bias=False)
+        std_scaler = StandardScaler()
+        lin_reg = LinearRegression()
+        polynomial_regression = Pipeline([
+            ("poly_features", polybig_features),
+            ("std_scaler", std_scaler),
+            ("lin_reg", lin_reg),
+        ])
+        polynomial_regression.fit(X, y)
+        y_newbig = polynomial_regression.predict(X_new)
+        plt.plot(X_new, y_newbig, style, label=str(degree), linewidth=width)
+    ##  画出训练数据
+    plt.plot(X, y, "b.", linewidth=3)
+    plt.legend(loc="upper left")
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$y$", rotation=0, fontsize=18)
+    plt.axis([-3, 3, 0, 10])
+    save_fig("high_degree_polynomials_plot")
+    plt.show()
+
+    ## 绘制模型的学习曲线
+    lin_reg = LinearRegression()
+    plot_learning_curves(lin_reg, X, y)
+    plt.axis([0, 80, 0, 3])
+    save_fig("underfitting_learning_curves_plot")
+    plt.show()
+
+    ##  10次多项式模型的学习曲线
+    polynomial_regression = Pipeline([
+        ("poly_features", PolynomialFeatures(degree=10, include_bias=False)),
+        ("lin_reg", LinearRegression()),
+    ])
+
+    plot_learning_curves(polynomial_regression, X, y)
+    plt.axis([0, 80, 0, 3])
+    plt.title("Figure.4-16")
+    ##save_fig("learning_curves_plot")
+    ##plt.show()
+
 #     ## 岭回归
 #     np.random.seed(42)
 #     m = 20
