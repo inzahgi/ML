@@ -391,17 +391,17 @@ if __name__ == '__main__':
     ##  生成训练数据
     t1s = np.linspace(t1a, t1b, 500)
     t2s = np.linspace(t1a, t2b, 500)
-    t1, t2 = np.meshgrid(t1s, t2s)
-    T = np.c_[t1.ravel(), t2.ravel()]
+    t1, t2 = np.meshgrid(t1s, t2s)  ## 生成笛卡儿积 把坐标分别放到t1, t2中
+    T = np.c_[t1.ravel(), t2.ravel()]  ## ravel() 返回视图 生成 [[t1, t2],....]  numpy.c_  连接各个轴
     Xr = np.array([[-1, 1], [-0.3, -1], [1, 0.1]])
-    yr = 2 * Xr[:, :1] + 0.5 * Xr[:, 1:]
-
+    yr = 2 * Xr[:, :1] + 0.5 * Xr[:, 1:]  ##  [[-1.5], [-1.1],[2.05]]
+    ##  闭式解 代价函数
     J = (1/len(Xr) * np.sum((T.dot(Xr.T) - yr.T)**2, axis=1)).reshape(t1.shape)
+    ## numpy.linalg.norm
+    N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)    ## ord = 1  一范数 列绝对值求和
+    N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)   ## ord = 2 二范数  平方根
 
-    N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)
-    N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)
-
-    t_min_idx = np.unravel_index(np.argmin(J), J.shape)
+    t_min_idx = np.unravel_index(np.argmin(J), J.shape)  ## 
     t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]
 
     t_init = np.array([[0.25], [-1]])
