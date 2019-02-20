@@ -108,10 +108,10 @@ def plot_model(model_class, polynomial, alphas, **model_kargs):
     plt.xlabel("$x_1$", fontsize=18)
     plt.axis([0, 3, 0, 4])
 
-
+##   批量梯度下降 路径  包含L1， L2正则
 def bgd_path(theta, X, y, l1, l2, core=1, eta=0.1, n_iterations = 50):
-    path = [theta]
-    for iteration in range(n_iterations):
+    path = [theta] ##  保存初始值
+    for iteration in range(n_iterations):  ##迭代50次训练 theta值 并保存
         gradients = core * 2/len(X) * X.T.dot((theta) - y) + l1 * np.sign(theta) + 2 * l2 * theta
         theta = theta - eta * gradients
         path.append(theta)
@@ -401,54 +401,55 @@ if __name__ == '__main__':
     N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)    ## ord = 1  一范数 列绝对值求和
     N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)   ## ord = 2 二范数  平方根
 
-    t_min_idx = np.unravel_index(np.argmin(J), J.shape)  ## 
+    t_min_idx = np.unravel_index(np.argmin(J), J.shape)  ##
     t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]
-
+    ##  theta初始值
     t_init = np.array([[0.25], [-1]])
+    ##  画出各个正则收敛曲线
+    plt.figure(figsize=(10, 6))
+    ##  lasso 和 ridge 训练收敛
+    for i, N, l1, l2, title in ((0, N1, 0.5, 0, "Lasso"), (1, N2, 0, 0.1, "Ridge")):
+        JR = J + l1 * N1 + l2 * N2**2
+        tr_min_idx = np.unravel_index(np.argmin(JR), JR.shape)
+        tlr_min, t2r_min = t1[tr_min_idx], t2[tr_min_idx]
+        ## 等高线
+        levelsJ = (np.exp(np.linspace(0, 1, 20)) - 1) * (np.max(J)) + np.min(J)
+        levelsJR = (np.exp(np.linspace(0, 1, 20)) - 1) * (np.max(JR) - np.min(JR)) + np.min(JR)
+        levelsN = np.linspace(0, np.max(N), 10)
 
-#     plt.figure(figsize=(10, 6))
-#     for i, N, l1, l2, title in ((0, N1, 0.5, 0, "Lasso"), (1, N2, 0, 0.1, "Ridge")):
-#         JR = J + l1 * N1 + l2 * N2**2
-#         tr_min_idx = np.unravel_index(np.argmin(JR), JR.shape)
-#         tlr_min, t2r_min = t1[tr_min_idx], t2[tr_min_idx]
-#
-#         levelsJ = (np.exp(np.linspace(0, 1, 20)) - 1) * (np.max(J)) + np.min(J)
-#         levelsJR = (np.exp(np.linspace(0, 1, 20)) - 1) * (np.max(JR) - np.min(JR)) + np.min(JR)
-#         levelsN = np.linspace(0, np.max(N), 10)
-#
-#         path_J = bgd_path(t_init, Xr, yr, l1=0, l2=0)
-#         path_JR = bgd_path(t_init, Xr, yr, l1, l2)
-#         path_N = bgd_path(t_init, Xr, yr, np.sign(l1)/3, np.sign(l2), core=0)
-#
-#         plt.subplot(221 + i * 2)
-#         plt.grid(True)
-#         plt.axhline(y=0, color='k')
-#         plt.axvline(x=0, color='k')
-#         plt.contour(t1, t2, J, levels=levelsJ, alpha=0.9)
-#         plt.contour(t1, t2, N, levels=levelsN)
-#         plt.plot(path_J[:, 0], path_J[:, 1], "w-o")
-#         plt.plot(t1_min, t2_min, "rs")
-#         plt.title(r"$\ell_{}$ penalty".format(i + 1), fontsize=16)
-#         plt.axis([t1a, t1b, t2a, t2b])
-#         if i == 1:
-#             plt.xlabel(r"$\theta_1$", fontsize=20)
-#         plt.ylabel(r"$\theta_2$", fontsize=20, rotation=0)
-#
-#         plt.subplot(222 + i * 2)
-#         plt.grid(True)
-#         plt.axhline(y=0, color='k')
-#         plt.axvline(x=0, color='k')
-#         plt.contour(t1, t2, JR, levels=levelsJR, alpha=0.9)
-#         plt.plot(path_JR[:, 0], path_JR[:, 1], "w-o")
-#         plt.plot(tlr_min, t2r_min, "rs")
-#         plt.title(title, fontsize=16)
-#         plt.axis([t1a, t1b, t2a, t2b])
-#         if i == 1:
-#             plt.xlabel(r"$\theta_1$", fontsize=20)
-#
-#     save_fig("lasso_vs_ridge_plot")
-#     plt.show()
-#
+        path_J = bgd_path(t_init, Xr, yr, l1=0, l2=0)  ##  原始批量梯度下降
+        path_JR = bgd_path(t_init, Xr, yr, l1, l2)  ##  带L1 L2 正则
+        path_N = bgd_path(t_init, Xr, yr, np.sign(l1)/3, np.sign(l2), core=0)  ##  弹性网络
+
+        plt.subplot(221 + i * 2)  ##  221   223
+        plt.grid(True)
+        plt.axhline(y=0, color='k')
+        plt.axvline(x=0, color='k')
+        plt.contour(t1, t2, J, levels=levelsJ, alpha=0.9)  ##  绘制等高线
+        plt.contour(t1, t2, N, levels=levelsN)  ##  绘制等高线
+        plt.plot(path_J[:, 0], path_J[:, 1], "w-o")
+        plt.plot(t1_min, t2_min, "rs")
+        plt.title(r"$\ell_{}$ penalty".format(i + 1), fontsize=16)
+        plt.axis([t1a, t1b, t2a, t2b])
+        if i == 1:
+            plt.xlabel(r"$\theta_1$", fontsize=20)
+        plt.ylabel(r"$\theta_2$", fontsize=20, rotation=0)
+
+        plt.subplot(222 + i * 2)   ##  222 lasso  224 ridge
+        plt.grid(True)
+        plt.axhline(y=0, color='k')
+        plt.axvline(x=0, color='k')
+        plt.contour(t1, t2, JR, levels=levelsJR, alpha=0.9)
+        plt.plot(path_JR[:, 0], path_JR[:, 1], "w-o")
+        plt.plot(tlr_min, t2r_min, "rs")
+        plt.title(title, fontsize=16)
+        plt.axis([t1a, t1b, t2a, t2b])
+        if i == 1:
+            plt.xlabel(r"$\theta_1$", fontsize=20)
+
+    save_fig("lasso_vs_ridge_plot")
+    plt.show()
+
 #     ##  使用Lasso 类的例子
 #     lasso_reg = Lasso(alpha=0.1)
 #     lasso_reg.fit(X, y)
