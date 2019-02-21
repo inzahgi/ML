@@ -123,7 +123,7 @@ def plot_svc_decision_boundary(svm_clf, xmin, xmax):
     gutter_down = decision_boundary - margin
     ##  画出支持向量和决策边界
     svs = svm_clf.support_vectors_
-    plt.scatter(svs[:, 0], svs[:, 1], s=180, facecolors='#FFAAAA')
+    plt.scatter(svs[:, 0], svs[:, 1], s=180, facecolors='#FFAAAA') ##  scatter画出散点图
     plt.plot(x0, decision_boundary, "k-", linewidth=2)
     plt.plot(x0, gutter_up, "k--", linewidth=2)
     plt.plot(x0, gutter_down, "k--", linewidth=2)
