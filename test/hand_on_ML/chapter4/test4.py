@@ -398,11 +398,11 @@ if __name__ == '__main__':
     ##  闭式解 代价函数
     J = (1/len(Xr) * np.sum((T.dot(Xr.T) - yr.T)**2, axis=1)).reshape(t1.shape)
     ## numpy.linalg.norm
-    N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)    ## ord = 1  一范数 列绝对值求和
-    N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)   ## ord = 2 二范数  平方根
+    N1 = np.linalg.norm(T, ord=1, axis=1).reshape(t1.shape)    ## ord = 1  一范数  T的各点 列绝对值求和 矩阵
+    N2 = np.linalg.norm(T, ord=2, axis=1).reshape(t1.shape)   ## ord = 2 二范数  T的各点 平方根求和
 
-    t_min_idx = np.unravel_index(np.argmin(J), J.shape)  ##
-    t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]
+    t_min_idx = np.unravel_index(np.argmin(J), J.shape)  ## np.argmin 沿着指定轴的最小坐标   unravel_index 将前一个坐标转换为指定矩阵大小索引
+    t1_min, t2_min = t1[t_min_idx], t2[t_min_idx]  ## 获取网格最小坐标
     ##  theta初始值
     t_init = np.array([[0.25], [-1]])
     ##  画出各个正则收敛曲线
@@ -437,8 +437,8 @@ if __name__ == '__main__':
 
         plt.subplot(222 + i * 2)   ##  222 lasso  224 ridge
         plt.grid(True)
-        plt.axhline(y=0, color='k')
-        plt.axvline(x=0, color='k')
+        plt.axhline(y=0, color='k')  ##  画垂线 y=0
+        plt.axvline(x=0, color='k')  ##  画垂线 x=0
         plt.contour(t1, t2, JR, levels=levelsJR, alpha=0.9)
         plt.plot(path_JR[:, 0], path_JR[:, 1], "w-o")
         plt.plot(tlr_min, t2r_min, "rs")
@@ -450,215 +450,221 @@ if __name__ == '__main__':
     save_fig("lasso_vs_ridge_plot")
     plt.show()
 
-#     ##  使用Lasso 类的例子
-#     lasso_reg = Lasso(alpha=0.1)
-#     lasso_reg.fit(X, y)
-#     lasso_reg.predict([[1.5]])
-#
-#     ##  elastic net
-#     elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
-#     elastic_net.fit(X, y)
-#     elastic_net.predict([[1.5]])
-#
-#     ##  early stopping
-#     np.random.seed(42)
-#     m = 100
-#     X = 6 * np.random.rand(m, 1) - 3
-#     y = 2 + X + 0.5 * X**2 + np.random.randn(m, 1)
-#
-#     X_train, X_val, y_train, y_val = train_test_split(X[:50], y[:50].ravel(), test_size=0.5, random_state=10)
-#     poly_scaler = Pipeline([
-#         ("poly_features", PolynomialFeatures(degree=90, include_bias=False)),
-#         ("std_scaler", StandardScaler()),
-#     ])
-#
-#     X_train_poly_scaled = poly_scaler.fit_transform(X_train)
-#     X_val_poly_scaled = poly_scaler.transform(X_val)
-#
-#     sgd_reg = SGDRegressor(max_iter= 1,
-#                            penalty=None,
-#                            eta0=0.0005,
-#                            warm_start=True,
-#                            learning_rate="constant",
-#                            random_state=42)
-#     n_epochs = 500
-#     train_errors, val_errors = [], []
-#     for epoch in range(n_epochs):
-#         sgd_reg.fit(X_train_poly_scaled, y_train)
-#         y_train_predict = sgd_reg.predict(X_train_poly_scaled)
-#         y_val_predict = sgd_reg.predict(X_val_poly_scaled)
-#         train_errors.append(mean_squared_error(y_train, y_train_predict))
-#         val_errors.append(mean_squared_error(y_val, y_val_predict))
-#
-#     best_epoch = np.argmin(val_errors)
-#     best_val_rmse = np.sqrt(val_errors[best_epoch])
-#
-#     plt.annotate('Best model',
-#                  xy=(best_epoch, best_val_rmse),
-#                  xytest=(best_epoch, best_val_rmse + 1),
-#                  ha="center",
-#                  arrowprops=dict(facecolor='black', shrink=0.005),
-#                  fontsize=16,
-#                  )
-#     best_val_rmse -= 0.03
-#     plt.plot([0, n_epochs], [best_val_rmse, best_val_rmse], "k:", linewidth=2)
-#     plt.plot(np.sqrt(val_errors), "b--", linewidth=3, label="Validation set")
-#     plt.plot(np.sqrt(train_errors), "r--", linewidth=2, label="Training set")
-#     plt.legend(loc="upper right", fontsize=14)
-#     plt.xlabel("Epoch", fontsize=14)
-#     plt.ylabel("RMSE", fontsize=14)
-#     plt.title("Figure 4-20. Early stopping regularization")
-#     save_fig("early_stopping_plot")
-#     plt.show()
-#
-#     sgd_reg=SGDRegressor(max_iter=1, warm_start=True, penalty=None, learning_rate="constant", eta0=0.0005)
-#
-#     minimum_val_error=float("inf")
-#     best_epoch=None
-#     best_model=None
-#     for epoch in range(1000):
-#         sgd_reg.fit(X_train_poly_scaled, y_train)
-#         y_val_predict=sgd_reg.predict(X_val_poly_scaled)
-#         val_error = mean_squared_error(y_val_predict, y_val)
-#         if val_error < minimum_val_error:
-#             minimum_val_error = val_error
-#             best_epoch = epoch
-#             best_model=clone(sgd_reg)
-#
-#     print("line = 520", best_epoch, best_model)
-#
-#
-# ##  逻辑回归
-#     ##   logistic function
-#     t = np.linspace(-10, 10, 100)
-#     sig = 1/ (1 + np.exp(-t))
-#     plt.figure(figsize=(9, 3))
-#     plt.plot([-10, 10], [0, 0], "k-")
-#     plt.plot([-10, 10], [0.5, 0.5], "k:")
-#     plt.plot([-10, 10], [1, 1], "k:")
-#     plt.plot([0, 0], [-1.1, 1.1], "k-")
-#     plt.plot(t, sig, "b-", linewidth=2, label=r"$\sigma(t) = \frac{1}{1 + e^{-t}}$")
-#     plt.xlabel("t")
-#     plt.legend(loc="upper left", fontsize=20)
-#     plt.axis([-10, 10, -0.1, 1.1])
-#     plt.title('Figure 4-21. Logistic function')
-#     save_fig("logistic_function_plot")
-#     plt.show()
-#
-#
-#     ## 获取花瓣特征数据
-#     iris=datasets.load_iris()
-#     list(iris.keys())
-#
-#     print("lie = 546", iris.DESCR)
-#     X = iris["data"][:,3:]
-#     y=(iris["target"]==2)
-#
-#
-#     log_reg=LogisticRegression()
-#     log_reg.fit(X, y)
-#
-#     X_new=np.linspace(0, 3, 1000).reshape(-1, 1)
-#     y_proba=log_reg.predict_proba(X_new)
-#     plt.plot(X_new, y_proba[:,1], "g--", label="Iris-Virginica")
-#     plt.plot(X_new, y_proba[:, 0], "b--", linewidth=2, label="Not, Iris-Virginica")
-#
-#     X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
-#     y_proba = log_reg.predict_proba(X_new)
-#     decision_boundary = X_new[y_proba[:, 1] >= 0.5][0]
-#     plt.figure(figsize=(8, 3))
-#     plt.plot(X[y==0], y[y==0], "bs")
-#     plt.plot(X[y==1], y[y==1], "g^")
-#     plt.plot([decision_boundary, decision_boundary], [-1, 2], "k:", linewidth=2)
-#     plt.plot(X_new, y_proba[:, 1], "g-", linewidth=2, label="Iris-Virginica")
-#     plt.plot(X_new, y_proba[:, 0], "b--", linewidth=2, label="Not Iris-Virginica")
-#     plt.text(decision_boundary+0.02, 0.15, "Decision  boundary", fontsize=14, color="k", ha="center")
-#     plt.arrow(decision_boundary, 0.08, -0.3, 0, head_width=0.05, head_length=0.1, fc='b', ec='b')
-#     plt.arrow(decision_boundary, 0.92, 0.3, 0, head_width=0.05, head_length=0.1, fc='g', ec='g')
-#     plt.xlabel("Petal width (cm)", fontsize=14)
-#     plt.ylabel("Probability", fontsize=14)
-#     plt.legend(loc="center left", fontsize=14)
-#     plt.axis([0, 3, -0.02, 1.02])
-#     save_fig("logistic_regression_plot")
-#     plt.show()
-#
-#
-#     print("line = 579", decision_boundary)
-#     print("line = 580", log_reg.predict([[1.7], [1.5]]))
-#
-#     X = iris["data"][:, (2, 3)]  # petal length, petal width
-#     y = (iris["target"] == 2).astype(np.int)
-#
-#     log_reg = LogisticRegression(C=10 ** 10, random_state=42)
-#     log_reg.fit(X, y)
-#
-#     x0, x1 = np.meshgrid(
-#         np.linspace(2.9, 7, 500).reshape(-1, 1),
-#         np.linspace(0.8, 2.7, 200).reshape(-1, 1),
-#     )
-#     X_new = np.c_[x0.ravel(), x1.ravel()]
-#
-#     y_proba = log_reg.predict_proba(X_new)
-#
-#     plt.figure(figsize=(10, 4))
-#     plt.plot(X[y == 0, 0], X[y == 0, 1], "bs")
-#     plt.plot(X[y == 1, 0], X[y == 1, 1], "g^")
-#
-#     zz = y_proba[:, 1].reshape(x0.shape)
-#     contour = plt.contour(x0, x1, zz, cmap=plt.cm.brg)
-#
-#     left_right = np.array([2.9, 7])
-#     boundary = -(log_reg.coef_[0][0] * left_right + log_reg.intercept_[0]) / log_reg.coef_[0][1]
-#
-#     plt.clabel(contour, inline=1, fontsize=12)
-#     plt.plot(left_right, boundary, "k--", linewidth=3)
-#     plt.text(3.5, 1.5, "Not Iris-Virginica", fontsize=14, color="b", ha="center")
-#     plt.text(6.5, 2.3, "Iris-Virginica", fontsize=14, color="g", ha="center")
-#     plt.xlabel("Petal length", fontsize=14)
-#     plt.ylabel("Petal width", fontsize=14)
-#     plt.axis([2.9, 7, 0.8, 2.7])
-#     save_fig("logistic_regression_contour_plot")
-#     plt.show()
-#
-#
-#     ##  sotmax
-#     X = iris["data"][::, (2, 3)]  # petal length(花瓣长度), petal width
-#     y = iris["target"]
-#
-#     softmax_reg = LogisticRegression(multi_class="multinomial", solver="lbfgs", C=10)
-#     softmax_reg.fit(X, y)
-#
-#     print("line = 627", softmax_reg.predict([[5, 2]]))
-#     print("line = 628", softmax_reg.predict_proba([5, 2]))
-#
-#     x0, x1 = np.meshgrid(
-#         np.linspace(0, 8, 500).reshape(-1, 1),
-#         np.linspace(0, 3.5, 200).reshape(-1, 1),
-#     )
-#     X_new = np.c_[x0.ravel(), x1.ravel()]
-#
-#     y_proba = softmax_reg.predict_proba(X_new)
-#     y_predict = softmax_reg.predict(X_new)
-#
-#     zz1 = y_proba[:, 1].reshape(x0.shape)
-#     zz = y_predict.reshape(x0.shape)
-#
-#     plt.figure(figsize=(10, 4))
-#     plt.plot(X[y == 2, 0], X[y == 2, 1], "g^", label="Iris-Virginica")
-#     plt.plot(X[y == 1, 0], X[y == 1, 1], "bs", label="Iris-Versicolor")
-#     plt.plot(X[y == 0, 0], X[y == 0, 1], "yo", label="Iris-Setosa")
-#
-#     from matplotlib.colors import ListedColormap
-#
-#     custom_cmap = ListedColormap(['#fafab0', '#9898ff', '#a0faa0'])
-#
-#     plt.contourf(x0, x1, zz, cmap=custom_cmap)
-#     contour = plt.contour(x0, x1, zz1, cmap=plt.cm.brg)
-#     plt.clabel(contour, inline=1, fontsize=12)
-#     plt.xlabel("Petal length", fontsize=14)
-#     plt.ylabel("Petal width", fontsize=14)
-#     plt.legend(loc="center left", fontsize=14)
-#     plt.title('Figure 4-25. Softmax Regression decision boundaries')
-#     plt.axis([0, 7, 0, 3.5])
-#     save_fig("softmax_regression_contour_plot")
-#     plt.show()
+    ##  使用Lasso 类的例子
+    lasso_reg = Lasso(alpha=0.1)
+    lasso_reg.fit(X, y)
+    print('line = 456 lasso_reg.redict(([[1.5]])) = {}'.format(lasso_reg.predict([[1.5]]))
+
+    ##  elastic net
+    elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
+    elastic_net.fit(X, y)
+    print('elastic_net.predict([[1.5]]) = {}'.format(elastic_net.predict([[1.5]]))
+
+    ##  early stopping
+    np.random.seed(42)
+    m = 100
+    X = 6 * np.random.rand(m, 1) - 3  ## 生成训练数据
+    y = 2 + X + 0.5 * X**2 + np.random.randn(m, 1)
+    
+    X_train, X_val, y_train, y_val = train_test_split(X[:50], y[:50].ravel(), test_size=0.5, random_state=10)   ## 拆分训练和测试集
+    ##  设置转换器 90次多相式
+    poly_scaler = Pipeline([
+        ("poly_features", PolynomialFeatures(degree=90, include_bias=False)),
+        ("std_scaler", StandardScaler()),
+    ])
+    ##  转换数据
+    X_train_poly_scaled = poly_scaler.fit_transform(X_train)
+    X_val_poly_scaled = poly_scaler.transform(X_val)
+
+    sgd_reg = SGDRegressor(max_iter= 1,
+                           penalty=None,
+                           eta0=0.0005,
+                           warm_start=True,
+                           learning_rate="constant",
+                           random_state=42)
+    n_epochs = 500
+    train_errors, val_errors = [], []
+    for epoch in range(n_epochs):
+        sgd_reg.fit(X_train_poly_scaled, y_train)
+        y_train_predict = sgd_reg.predict(X_train_poly_scaled)
+        y_val_predict = sgd_reg.predict(X_val_poly_scaled)
+        train_errors.append(mean_squared_error(y_train, y_train_predict))
+        val_errors.append(mean_squared_error(y_val, y_val_predict))
+    ##  找到最近训练轮次 和 最小 平方根
+    best_epoch = np.argmin(val_errors)
+    best_val_rmse = np.sqrt(val_errors[best_epoch])
+    ##  annotate 标注
+    plt.annotate('Best model',
+                 xy=(best_epoch, best_val_rmse),
+                 xytest=(best_epoch, best_val_rmse + 1),
+                 ha="center",
+                 arrowprops=dict(facecolor='black', shrink=0.005),
+                 fontsize=16,
+                 )
+    ## 画出学习曲线
+    best_val_rmse -= 0.03
+    plt.plot([0, n_epochs], [best_val_rmse, best_val_rmse], "k:", linewidth=2)
+    plt.plot(np.sqrt(val_errors), "b--", linewidth=3, label="Validation set")
+    plt.plot(np.sqrt(train_errors), "r--", linewidth=2, label="Training set")
+    plt.legend(loc="upper right", fontsize=14)
+    plt.xlabel("Epoch", fontsize=14)
+    plt.ylabel("RMSE", fontsize=14)
+    plt.title("Figure 4-20. Early stopping regularization")
+    save_fig("early_stopping_plot")
+    plt.show()
+
+    ##  画出 随机梯度  学习曲线
+    sgd_reg=SGDRegressor(max_iter=1, warm_start=True, penalty=None, learning_rate="constant", eta0=0.0005)
+
+    minimum_val_error=float("inf")
+    best_epoch=None
+    best_model=None
+    for epoch in range(1000):
+        sgd_reg.fit(X_train_poly_scaled, y_train)
+        y_val_predict=sgd_reg.predict(X_val_poly_scaled)
+        val_error = mean_squared_error(y_val_predict, y_val)
+        if val_error < minimum_val_error:
+            minimum_val_error = val_error
+            best_epoch = epoch
+            best_model=clone(sgd_reg)
+
+    print("line = 531", best_epoch, best_model)
+
+
+##  逻辑回归
+    ##   logistic function
+    t = np.linspace(-10, 10, 100)
+    sig = 1/ (1 + np.exp(-t))
+    plt.figure(figsize=(9, 3))
+    plt.plot([-10, 10], [0, 0], "k-")
+    plt.plot([-10, 10], [0.5, 0.5], "k:")
+    plt.plot([-10, 10], [1, 1], "k:")
+    plt.plot([0, 0], [-1.1, 1.1], "k-")
+    plt.plot(t, sig, "b-", linewidth=2, label=r"$\sigma(t) = \frac{1}{1 + e^{-t}}$")
+    plt.xlabel("t")
+    plt.legend(loc="upper left", fontsize=20)
+    plt.axis([-10, 10, -0.1, 1.1])
+    plt.title('Figure 4-21. Logistic function')
+    save_fig("logistic_function_plot")
+    plt.show()
+
+
+    ## 获取花瓣特征数据
+    iris=datasets.load_iris()
+    list(iris.keys())
+
+    print("lie = 556 iris.DESCR= {}".format(iris.DESCR))
+    X = iris["data"][:,3:]
+    y=(iris["target"]==2)
+    print("X = {}\ty = {}".format(X, y))
+
+    ## 逻辑回归训练数据
+    log_reg=LogisticRegression()
+    log_reg.fit(X, y)
+    
+    X_new=np.linspace(0, 3, 1000).reshape(-1, 1)  ## 生成测试数据
+    y_proba=log_reg.predict_proba(X_new)
+    ##  画出不同类别的 特征判别 概率曲线
+    plt.plot(X_new, y_proba[:,1], "g--", label="Iris-Virginica")  ##  是的概率
+    plt.plot(X_new, y_proba[:, 0], "b--", linewidth=2, label="Not, Iris-Virginica")  ##  不是的概率
+
+    X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
+    y_proba = log_reg.predict_proba(X_new)
+    decision_boundary = X_new[y_proba[:, 1] >= 0.5][0] 
+    plt.figure(figsize=(8, 3))
+    plt.plot(X[y==0], y[y==0], "bs")
+    plt.plot(X[y==1], y[y==1], "g^")
+    plt.plot([decision_boundary, decision_boundary], [-1, 2], "k:", linewidth=2)
+    plt.plot(X_new, y_proba[:, 1], "g-", linewidth=2, label="Iris-Virginica")
+    plt.plot(X_new, y_proba[:, 0], "b--", linewidth=2, label="Not Iris-Virginica")
+    plt.text(decision_boundary+0.02, 0.15, "Decision  boundary", fontsize=14, color="k", ha="center")
+    plt.arrow(decision_boundary, 0.08, -0.3, 0, head_width=0.05, head_length=0.1, fc='b', ec='b')
+    plt.arrow(decision_boundary, 0.92, 0.3, 0, head_width=0.05, head_length=0.1, fc='g', ec='g')
+    plt.xlabel("Petal width (cm)", fontsize=14)
+    plt.ylabel("Probability", fontsize=14)
+    plt.legend(loc="center left", fontsize=14)
+    plt.axis([0, 3, -0.02, 1.02])
+    save_fig("logistic_regression_plot")
+    plt.show()
+
+
+    print("line = 591 decision_boundary = {}".format(decision_boundary))
+    print("line = 592 log_reg.predict([[1.7], [1.5]]) = {}".format(log_reg.predict([[1.7], [1.5]])))
+
+    X = iris["data"][:, (2, 3)]  # petal length, petal width
+    y = (iris["target"] == 2).astype(np.int)
+
+    log_reg = LogisticRegression(C=10 ** 10, random_state=42)
+    log_reg.fit(X, y)
+    ##  生成网格
+    x0, x1 = np.meshgrid(
+        np.linspace(2.9, 7, 500).reshape(-1, 1),
+        np.linspace(0.8, 2.7, 200).reshape(-1, 1),
+    )
+    X_new = np.c_[x0.ravel(), x1.ravel()]
+
+    y_proba = log_reg.predict_proba(X_new)
+    ##  
+    plt.figure(figsize=(10, 4))
+    plt.plot(X[y == 0, 0], X[y == 0, 1], "bs")   ##  s  方块
+    plt.plot(X[y == 1, 0], X[y == 1, 1], "g^")   ##  ^ 上三角
+
+    zz = y_proba[:, 1].reshape(x0.shape)
+    contour = plt.contour(x0, x1, zz, cmap=plt.cm.brg)
+
+    left_right = np.array([2.9, 7])
+    boundary = -(log_reg.coef_[0][0] * left_right + log_reg.intercept_[0]) / log_reg.coef_[0][1]
+
+    plt.clabel(contour, inline=1, fontsize=12)
+    plt.plot(left_right, boundary, "k--", linewidth=3)  ##  画出决策边界线  k 黑色 -- 虚线
+    plt.text(3.5, 1.5, "Not Iris-Virginica", fontsize=14, color="b", ha="center")
+    plt.text(6.5, 2.3, "Iris-Virginica", fontsize=14, color="g", ha="center")
+    plt.xlabel("Petal length", fontsize=14)
+    plt.ylabel("Petal width", fontsize=14)
+    plt.axis([2.9, 7, 0.8, 2.7])
+    save_fig("logistic_regression_contour_plot")
+    plt.show()
+
+
+    ##  sotmax
+    X = iris["data"][::, (2, 3)]  # petal length(花瓣长度), petal width
+    y = iris["target"]
+    ##  训练 softmax
+    softmax_reg = LogisticRegression(multi_class="multinomial", solver="lbfgs", C=10)
+    softmax_reg.fit(X, y)
+
+    print("line = 636 softmax_reg.predict([[5, 2]]) = {}", softmax_reg.predict([[5, 2]]))
+    print("line = 637 softmax_reg.predict_proba([5, 2]) = {}", softmax_reg.predict_proba([5, 2]))
+
+    x0, x1 = np.meshgrid(
+        np.linspace(0, 8, 500).reshape(-1, 1),
+        np.linspace(0, 3.5, 200).reshape(-1, 1),
+    )
+    ##  生成测试数据
+    X_new = np.c_[x0.ravel(), x1.ravel()]
+     
+    y_proba = softmax_reg.predict_proba(X_new)  ## 预测概率
+    y_predict = softmax_reg.predict(X_new) ## 预测结果
+
+    zz1 = y_proba[:, 1].reshape(x0.shape)
+    zz = y_predict.reshape(x0.shape)
+    ##  画出 训练数据点
+    plt.figure(figsize=(10, 4))
+    plt.plot(X[y == 2, 0], X[y == 2, 1], "g^", label="Iris-Virginica")
+    plt.plot(X[y == 1, 0], X[y == 1, 1], "bs", label="Iris-Versicolor")
+    plt.plot(X[y == 0, 0], X[y == 0, 1], "yo", label="Iris-Setosa")
+
+    from matplotlib.colors import ListedColormap
+    ##  自定义色盘
+    custom_cmap = ListedColormap(['#fafab0', '#9898ff', '#a0faa0'])
+    ##  画出决策边界
+    plt.contourf(x0, x1, zz, cmap=custom_cmap)  ## 画出等高线 颜色区分
+    contour = plt.contour(x0, x1, zz1, cmap=plt.cm.brg)
+    plt.clabel(contour, inline=1, fontsize=12) ## 画出等高线标注
+    plt.xlabel("Petal length", fontsize=14)
+    plt.ylabel("Petal width", fontsize=14)
+    plt.legend(loc="center left", fontsize=14)
+    plt.title('Figure 4-25. Softmax Regression decision boundaries')
+    plt.axis([0, 7, 0, 3.5])
+    save_fig("softmax_regression_contour_plot")
+    plt.show()
