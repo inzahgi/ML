@@ -453,12 +453,12 @@ if __name__ == '__main__':
     ##  使用Lasso 类的例子
     lasso_reg = Lasso(alpha=0.1)
     lasso_reg.fit(X, y)
-    print('line = 456 lasso_reg.redict(([[1.5]])) = {}'.format(lasso_reg.predict([[1.5]]))
+    print('line = 456 lasso_reg.redict(([[1.5]])) = {}'.format(lasso_reg.predict([[1.5]])))
 
     ##  elastic net
     elastic_net = ElasticNet(alpha=0.1, l1_ratio=0.5)
     elastic_net.fit(X, y)
-    print('elastic_net.predict([[1.5]]) = {}'.format(elastic_net.predict([[1.5]]))
+    print('elastic_net.predict([[1.5]]) = {}'.format(elastic_net.predict([[1.5]])))
 
     ##  early stopping
     np.random.seed(42)
