@@ -152,13 +152,13 @@ def gaussian_rbf(x, landmark, gamma):
     return np.exp(-gamma * np.linalg.norm(x - landmark, axis=1)**2)
 
 
-
+    ##  找出支撑向量
 def find_support_vectors(svm_reg, X, y):
-    y_pred = svm_reg.predict(X)
-    off_margin = (np.abs(y - y_pred) >= svm_reg.epsilon)
+    y_pred = svm_reg.predict(X) ## 生成预测值
+    off_margin = (np.abs(y - y_pred) >= svm_reg.epsilon) ##  计算间隔误差
     return np.argwhere(off_margin)
 
-
+##  画出svm回归
 def plot_svm_regression(svm_reg, X, y, axes):
     x1s = np.linspace(axes[0], axes[1], 100).reshape(100, 1)
     y_pred = svm_reg.predict(x1s)
@@ -475,23 +475,23 @@ if __name__ == '__main__':
 
     save_fig("kernel_method_plot")
     plt.show()
-
+    ## 高斯函数将一维特征转换为二维特征
     x1_example = X1D[3, 0]
     for landmark in (-2, 1):
         k = gaussian_rbf(np.array([[x1_example]]), np.array([[landmark]]), gamma)
-        print("Phi({}, {}) = {}".format(x1_example, landmark, k))
-
+        print("line = 482 Phi({}, {}) = {}".format(x1_example, landmark, k))
+    ##  rbf核函数训练
     rbf_kernel_svm_clf = Pipeline((
         ("scaler", StandardScaler()),
         ("svm_clf", SVC(kernel="rbf", gamma=5, C=0.001))
     ))
 
     rbf_kernel_svm_clf.fit(X, y)
-
+    ## 生成参数网格
     gamma1, gamma2 = 0.1, 5
     C1, C2 = 0.001, 1000
     hyperparams = (gamma1, C1), (gamma1, C2), (gamma2, C1), (gamma2, C2)
-
+    ##  不同gamma 和 C值的训练
     svm_clfs = []
     for gamma, C in hyperparams:
         rbf_kernel_svm_clf = Pipeline([
@@ -502,7 +502,7 @@ if __name__ == '__main__':
         svm_clfs.append(rbf_kernel_svm_clf)
 
     plt.figure(figsize=(11, 7))
-
+    ##  enumerate 返回带序号的枚举对象  画出不同参数的训练结果
     for i, svm_clf in enumerate(svm_clfs):
         plt.subplot(221 + i)
         plot_predictions(svm_clf, [-1.5, 2.5, -1, 1.5])
@@ -512,45 +512,45 @@ if __name__ == '__main__':
 
     save_fig("moons_rbf_svc_plot")
     plt.show()
-    #
-    # np.random.seed(42)
-    # m = 50
-    # X = 2 * np.random.rand(m, 1)
-    # y = (4 + 3 * X + np.random.randn(m, 1)).ravel()
-    #
-    #
-    # svm_reg = LinearSVR(epsilon=1.5, random_state=42)
-    # svm_reg.fit(X, y)
-    #
-    # svm_reg1 = LinearSVR(epsilon=1.5, random_state=42)
-    # svm_reg2 = LinearSVR(epsilon=0.5, random_state=42)
-    # svm_reg1.fit(X, y)
-    # svm_reg2.fit(X, y)
-    #
-    # svm_reg1.support_ = find_support_vectors(svm_reg1, X, y)
-    # svm_reg2.support_ = find_support_vectors(svm_reg2, X, y)
-    #
-    # eps_x1 = 1
-    # eps_y_pred = svm_reg1.predict([[eps_x1]])
-    #
-    # plt.figure(figsize=(9, 4))
-    # plt.subplot(121)
-    # plot_svm_regression(svm_reg1, X, y, [0, 2, 3, 11])
-    # plt.title(r"$\epsilon = {}$".format(svm_reg1.epsilon), fontsize=18)
-    # plt.ylabel(r"$y$", fontsize=18, rotation=0)
-    # # plt.plot([eps_x1, eps_x1], [eps_y_pred, eps_y_pred - svm_reg1.epsilon], "k-", linewidth=2)
-    # plt.annotate(
-    #     '', xy=(eps_x1, eps_y_pred), xycoords='data',
-    #     xytext=(eps_x1, eps_y_pred - svm_reg1.epsilon),
-    #     textcoords='data', arrowprops={'arrowstyle': '<->', 'linewidth': 1.5}
-    # )
-    # plt.text(0.91, 5.6, r"$\epsilon$", fontsize=20)
-    # plt.subplot(122)
-    # plot_svm_regression(svm_reg2, X, y, [0, 2, 3, 11])
-    # plt.title(r"$\epsilon = {}$".format(svm_reg2.epsilon), fontsize=18)
-    # save_fig("svm_regression_plot")
-    # plt.show()
-    #
+
+    ##  生成训练数据
+    np.random.seed(42)
+    m = 50
+    X = 2 * np.random.rand(m, 1)
+    y = (4 + 3 * X + np.random.randn(m, 1)).ravel()
+    ## 线性svm 训练
+    svm_reg = LinearSVR(epsilon=1.5, random_state=42)
+    svm_reg.fit(X, y)
+    ##  线性svm  用不同epsilon (不敏感度)  训练
+    svm_reg1 = LinearSVR(epsilon=1.5, random_state=42)
+    svm_reg2 = LinearSVR(epsilon=0.5, random_state=42)
+    svm_reg1.fit(X, y)
+    svm_reg2.fit(X, y)
+    ##  找出支撑向量
+    svm_reg1.support_ = find_support_vectors(svm_reg1, X, y)
+    svm_reg2.support_ = find_support_vectors(svm_reg2, X, y)
+    ##  预测结果
+    eps_x1 = 1
+    eps_y_pred = svm_reg1.predict([[eps_x1]])
+    ##  画出不同epsilon 的结果
+    plt.figure(figsize=(9, 4))
+    plt.subplot(121)
+    plot_svm_regression(svm_reg1, X, y, [0, 2, 3, 11])
+    plt.title(r"$\epsilon = {}$".format(svm_reg1.epsilon), fontsize=18)
+    plt.ylabel(r"$y$", fontsize=18, rotation=0)
+    # plt.plot([eps_x1, eps_x1], [eps_y_pred, eps_y_pred - svm_reg1.epsilon], "k-", linewidth=2)
+    plt.annotate(
+        '', xy=(eps_x1, eps_y_pred), xycoords='data',
+        xytext=(eps_x1, eps_y_pred - svm_reg1.epsilon),
+        textcoords='data', arrowprops={'arrowstyle': '<->', 'linewidth': 1.5}
+    )
+    plt.text(0.91, 5.6, r"$\epsilon$", fontsize=20)
+    plt.subplot(122)
+    plot_svm_regression(svm_reg2, X, y, [0, 2, 3, 11])
+    plt.title(r"$\epsilon = {}$".format(svm_reg2.epsilon), fontsize=18)
+    save_fig("svm_regression_plot")
+    plt.show()
+
     # np.random.seed(42)
     # m = 100
     # X = 2 * np.random.rand(m, 1) - 1
