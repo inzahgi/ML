@@ -56,7 +56,7 @@ def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
 import warnings
 warnings.filterwarnings(action="ignore", message="^internal gelsd")
 
-
+## 自定义  线性核svm
 class MyLinearSVC(BaseEstimator):
     def __init__(self, C=1, eta0=1, eta_d=10000, n_epochs=1000, random_state=None):
         self.C = C
@@ -170,7 +170,7 @@ def plot_svm_regression(svm_reg, X, y, axes):
     plt.xlabel(r"$x_1$", fontsize=18)
     plt.legend(loc="upper left", fontsize=18)
     plt.axis(axes)
-
+##  画出3D决策边界
 def plot_3D_decision_function(ax, w, b, x1_lim=[4, 6], x2_lim=[0.8, 2.8]):
     x1_in_bounds = (X[:, 0] > x1_lim[0]) & (X[:, 0] < x1_lim[1])
     X_crop = X[x1_in_bounds]
@@ -199,7 +199,7 @@ def plot_3D_decision_function(ax, w, b, x1_lim=[4, 6], x2_lim=[0.8, 2.8]):
     ax.set_zlabel(r"$h = \mathbf{w}^T \mathbf{x} + b$", fontsize=18)
     ax.legend(loc="upper left", fontsize=16)
 
-
+##  画出2D决策边界
 def plot_2D_decision_function(w, b, ylabel=True, x1_lim=[-3, 3]):
     x1 = np.linspace(x1_lim[0], x1_lim[1], 200)
     y = w * x1 + b
@@ -529,12 +529,12 @@ if __name__ == '__main__':
     ##  找出支撑向量
     svm_reg1.support_ = find_support_vectors(svm_reg1, X, y)
     svm_reg2.support_ = find_support_vectors(svm_reg2, X, y)
-    ##  预测结果
+    ##  svm回归 预测结果
     eps_x1 = 1
     eps_y_pred = svm_reg1.predict([[eps_x1]])
     ##  画出不同epsilon 的结果
     plt.figure(figsize=(9, 4))
-    plt.subplot(121)
+    plt.subplot(121)  ##  epsilon=1.5的训练图
     plot_svm_regression(svm_reg1, X, y, [0, 2, 3, 11])
     plt.title(r"$\epsilon = {}$".format(svm_reg1.epsilon), fontsize=18)
     plt.ylabel(r"$y$", fontsize=18, rotation=0)
@@ -545,159 +545,159 @@ if __name__ == '__main__':
         textcoords='data', arrowprops={'arrowstyle': '<->', 'linewidth': 1.5}
     )
     plt.text(0.91, 5.6, r"$\epsilon$", fontsize=20)
-    plt.subplot(122)
+    plt.subplot(122) ## epsilon=0.5 的训练图
     plot_svm_regression(svm_reg2, X, y, [0, 2, 3, 11])
     plt.title(r"$\epsilon = {}$".format(svm_reg2.epsilon), fontsize=18)
     save_fig("svm_regression_plot")
     plt.show()
+##  多项式特征 不同C值的训练拟合情况
+    np.random.seed(42)
+    m = 100
+    X = 2 * np.random.rand(m, 1) - 1
+    y = (0.2 + 0.1 * X + 0.5 * X ** 2 + np.random.randn(m, 1) / 10).ravel()
 
-    # np.random.seed(42)
-    # m = 100
-    # X = 2 * np.random.rand(m, 1) - 1
-    # y = (0.2 + 0.1 * X + 0.5 * X ** 2 + np.random.randn(m, 1) / 10).ravel()
-    #
-    # svm_poly_reg = SVR(kernel="poly", degree=2, C=100, epsilon=0.1)
-    # svm_poly_reg.fit(X, y)
-    #
-    # svm_poly_reg1 = SVR(kernel="poly", degree=2, C=100, epsilon=0.1)
-    # svm_poly_reg2 = SVR(kernel="poly", degree=2, C=0.01, epsilon=0.1)
-    # svm_poly_reg1.fit(X, y)
-    # svm_poly_reg2.fit(X, y)
-    #
-    # plt.figure(figsize=(9, 4))
-    # plt.subplot(121)
-    # plot_svm_regression(svm_poly_reg1, X, y, [-1, 1, 0, 1])
-    # plt.title(r"$degree={}, C={}, \epsilon = {}$".format(svm_poly_reg1.degree, svm_poly_reg1.C, svm_poly_reg1.epsilon),
-    #           fontsize=18)
-    # plt.ylabel(r"$y$", fontsize=18, rotation=0)
-    # plt.subplot(122)
-    # plot_svm_regression(svm_poly_reg2, X, y, [-1, 1, 0, 1])
-    # plt.title(r"$degree={}, C={}, \epsilon = {}$".format(svm_poly_reg2.degree, svm_poly_reg2.C, svm_poly_reg2.epsilon),
-    #           fontsize=18)
-    # save_fig("svm_with_polynomial_kernel_plot")
-    # plt.show()
-    #
-    # iris = datasets.load_iris()
-    # X = iris["data"][:, (2, 3)]  # petal length, petal width
-    # y = (iris["target"] == 2).astype(np.float64)  # Iris-Virginica
-    #
-    # fig = plt.figure(figsize=(11, 6))
-    # ax1 = fig.add_subplot(111, projection='3d')
-    # plot_3D_decision_function(ax1, w=svm_clf2.coef_[0], b=svm_clf2.intercept_[0])
-    # plt.title('Figure 5-12. Decision function for the iris dataset')
-    #
-    # save_fig("iris_3D_plot")
-    # plt.show()
-    #
-    # plt.figure(figsize=(12, 3.2))
-    #
-    # plt.subplot(121)
-    # plot_2D_decision_function(1, 0)
-    #
-    # plt.subplot(122)
-    # plot_2D_decision_function(0.5, 0, ylabel=False)
-    #
-    # save_fig("small_w_large_margin_plot")
-    # plt.show()
-    #
-    # iris = datasets.load_iris()
-    # X = iris["data"][:, (2, 3)]  # petal length, petal width
-    # y = (iris["target"] == 2).astype(np.float64)  # Iris-Virginica
-    #
-    # svm_clf = SVC(kernel="linear", C=1)
-    # svm_clf.fit(X, y)
-    # svm_clf.predict([[5.3, 1.3]])
-    #
-    # t = np.linspace(-2, 4, 200)
-    # h = np.where(1 - t < 0, 0, 1 - t)  # max(0, 1-t)
-    #
-    # plt.figure(figsize=(5, 2.8))
-    # plt.plot(t, h, "b-", linewidth=2, label="$max(0, 1 - t)$")
-    # plt.grid(True, which='both')
-    # plt.axhline(y=0, color='k')
-    # plt.axvline(x=0, color='k')
-    # plt.yticks(np.arange(-1, 2.5, 1))
-    # plt.xlabel("$t$", fontsize=16)
-    # plt.axis([-2, 4, -1, 2.5])
-    # plt.legend(loc="upper right", fontsize=16)
-    # plt.title('Hinge Loss')
-    #
-    # save_fig("hinge_plot")
-    # plt.show()
-    #
-    # X, y = make_moons(n_samples=1000, noise=0.4, random_state=42)
-    # plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs")
-    # plt.plot(X[:, 0][y == 1], X[:, 1][y == 1], "g^")
-    #
-    # tol = 0.1
-    # tols = []
-    # times = []
-    # for i in range(10):
-    #     svm_clf = SVC(kernel="poly", gamma=3, C=10, tol=tol, verbose=1)
-    #     t1 = time.time()
-    #     svm_clf.fit(X, y)
-    #     t2 = time.time()
-    #     times.append(t2 - t1)
-    #     tols.append(tol)
-    #     print(i, tol, t2 - t1)
-    #     tol /= 10
-    # plt.semilogx(tols, times)
-    #
-    # # Training set
-    # X = iris["data"][:, (2, 3)]  # petal length, petal width
-    # y = (iris["target"] == 2).astype(np.float64).reshape(-1, 1)  # Iris-Virginica
-    #
-    # C = 2
-    # svm_clf = MyLinearSVC(C=C, eta0=10, eta_d=1000, n_epochs=60000, random_state=2)
-    # svm_clf.fit(X, y)
-    # svm_clf.predict(np.array([[5, 2], [4, 1]]))
-    #
-    # plt.plot(range(svm_clf.n_epochs), svm_clf.Js)
-    # plt.axis([0, svm_clf.n_epochs, 0, 100])
-    #
-    # print("line = 649", svm_clf.intercept_, svm_clf.coef_)
-    #
-    # svm_clf2 = SVC(kernel="linear", C=C)
-    # svm_clf2.fit(X, y.ravel())
-    # print(svm_clf2.intercept_, svm_clf2.coef_)
-    #
-    # yr = y.ravel()
-    # plt.figure(figsize=(12, 3.2))
-    # plt.subplot(121)
-    # plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^", label="Iris-Virginica")
-    # plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs", label="Not Iris-Virginica")
-    # plot_svc_decision_boundary(svm_clf, 4, 6)
-    # plt.xlabel("Petal length", fontsize=14)
-    # plt.ylabel("Petal width", fontsize=14)
-    # plt.title("MyLinearSVC", fontsize=14)
-    # plt.axis([4, 6, 0.8, 2.8])
-    #
-    # plt.subplot(122)
-    # plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
-    # plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
-    # plot_svc_decision_boundary(svm_clf2, 4, 6)
-    # plt.xlabel("Petal length", fontsize=14)
-    # plt.title("SVC", fontsize=14)
-    # plt.axis([4, 6, 0.8, 2.8])
-    #
-    # sgd_clf = SGDClassifier(loss="hinge", alpha=0.017, max_iter=50, random_state=42)
-    # sgd_clf.fit(X, y.ravel())
-    #
-    # m = len(X)
-    # t = y * 2 - 1  # -1 if t==0, +1 if t==1
-    # X_b = np.c_[np.ones((m, 1)), X]  # Add bias input x0=1
-    # X_b_t = X_b * t
-    # sgd_theta = np.r_[sgd_clf.intercept_[0], sgd_clf.coef_[0]]
-    # print(sgd_theta)
-    # support_vectors_idx = (X_b_t.dot(sgd_theta) < 1).ravel()
-    # sgd_clf.support_vectors_ = X[support_vectors_idx]
-    # sgd_clf.C = C
-    #
-    # plt.figure(figsize=(5.5, 3.2))
-    # plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
-    # plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
-    # plot_svc_decision_boundary(sgd_clf, 4, 6)
-    # plt.xlabel("Petal length", fontsize=14)
-    # plt.ylabel("Petal width", fontsize=14)
-    # plt.title("SGDClassifier", fontsize=14)
-    # plt.axis([4, 6, 0.8, 2.8])
+    svm_poly_reg = SVR(kernel="poly", degree=2, C=100, epsilon=0.1)
+    svm_poly_reg.fit(X, y)
+
+    svm_poly_reg1 = SVR(kernel="poly", degree=2, C=100, epsilon=0.1)
+    svm_poly_reg2 = SVR(kernel="poly", degree=2, C=0.01, epsilon=0.1)
+    svm_poly_reg1.fit(X, y)
+    svm_poly_reg2.fit(X, y)
+
+    plt.figure(figsize=(9, 4))
+    plt.subplot(121) ## C =100
+    plot_svm_regression(svm_poly_reg1, X, y, [-1, 1, 0, 1])
+    plt.title(r"$degree={}, C={}, \epsilon = {}$".format(svm_poly_reg1.degree, svm_poly_reg1.C, svm_poly_reg1.epsilon),
+              fontsize=18)
+    plt.ylabel(r"$y$", fontsize=18, rotation=0)
+    plt.subplot(122) ## C = 0.01
+    plot_svm_regression(svm_poly_reg2, X, y, [-1, 1, 0, 1])
+    plt.title(r"$degree={}, C={}, \epsilon = {}$".format(svm_poly_reg2.degree, svm_poly_reg2.C, svm_poly_reg2.epsilon),
+              fontsize=18)
+    save_fig("svm_with_polynomial_kernel_plot")
+    plt.show()
+    ###  导入花瓣数据
+    iris = datasets.load_iris()
+    X = iris["data"][:, (2, 3)]  # petal length, petal width
+    y = (iris["target"] == 2).astype(np.float64)  # Iris-Virginica
+    ## 画出花瓣数据的3D特征图
+    fig = plt.figure(figsize=(11, 6))
+    ax1 = fig.add_subplot(111, projection='3d')
+    plot_3D_decision_function(ax1, w=svm_clf2.coef_[0], b=svm_clf2.intercept_[0])
+    plt.title('Figure 5-12. Decision function for the iris dataset')
+
+    save_fig("iris_3D_plot")
+    plt.show()
+
+    plt.figure(figsize=(12, 3.2))
+
+    plt.subplot(121) # w = 1
+    plot_2D_decision_function(1, 0)
+
+    plt.subplot(122) # w = 0.5
+    plot_2D_decision_function(0.5, 0, ylabel=False)
+
+    save_fig("small_w_large_margin_plot")
+    plt.show()
+
+    iris = datasets.load_iris()
+    X = iris["data"][:, (2, 3)]  # petal length, petal width
+    y = (iris["target"] == 2).astype(np.float64)  # Iris-Virginica
+
+    svm_clf = SVC(kernel="linear", C=1)
+    svm_clf.fit(X, y)
+    print('line = 609  svm_clf.predict([[5.3, 1.3]]) = {}'.format(svm_clf.predict([[5.3, 1.3]])));
+
+    t = np.linspace(-2, 4, 200)
+    h = np.where(1 - t < 0, 0, 1 - t)  # max(0, 1-t)
+    ##  画出 hinge 损失函数
+    plt.figure(figsize=(5, 2.8))
+    plt.plot(t, h, "b-", linewidth=2, label="$max(0, 1 - t)$")
+    plt.grid(True, which='both')
+    plt.axhline(y=0, color='k')
+    plt.axvline(x=0, color='k')
+    plt.yticks(np.arange(-1, 2.5, 1))
+    plt.xlabel("$t$", fontsize=16)
+    plt.axis([-2, 4, -1, 2.5])
+    plt.legend(loc="upper right", fontsize=16)
+    plt.title('Hinge Loss')
+
+    save_fig("hinge_plot")
+    plt.show()
+    ##  make_moons 生成半环数据
+    X, y = make_moons(n_samples=1000, noise=0.4, random_state=42)
+    plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs")
+    plt.plot(X[:, 0][y == 1], X[:, 1][y == 1], "g^")
+    ##  早期停止训练法
+    tol = 0.1
+    tols = []
+    times = []
+    for i in range(10):
+        svm_clf = SVC(kernel="poly", gamma=3, C=10, tol=tol, verbose=1)
+        t1 = time.time()
+        svm_clf.fit(X, y)
+        t2 = time.time()
+        times.append(t2 - t1)
+        tols.append(tol)
+        print(i, tol, t2 - t1)
+        tol /= 10
+    plt.semilogx(tols, times) ##  画出 时间和停止误差
+##  自定义实现svm算法
+    # Training set
+    X = iris["data"][:, (2, 3)]  # petal length, petal width
+    y = (iris["target"] == 2).astype(np.float64).reshape(-1, 1)  # Iris-Virginica
+
+    C = 2
+    svm_clf = MyLinearSVC(C=C, eta0=10, eta_d=1000, n_epochs=60000, random_state=2)
+    svm_clf.fit(X, y)
+    svm_clf.predict(np.array([[5, 2], [4, 1]]))
+
+    plt.plot(range(svm_clf.n_epochs), svm_clf.Js)
+    plt.axis([0, svm_clf.n_epochs, 0, 100])
+
+    print("line = 649", svm_clf.intercept_, svm_clf.coef_)
+
+    svm_clf2 = SVC(kernel="linear", C=C)
+    svm_clf2.fit(X, y.ravel())
+    print(svm_clf2.intercept_, svm_clf2.coef_)
+
+    yr = y.ravel()
+    plt.figure(figsize=(12, 3.2))
+    plt.subplot(121)
+    plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^", label="Iris-Virginica")
+    plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs", label="Not Iris-Virginica")
+    plot_svc_decision_boundary(svm_clf, 4, 6)
+    plt.xlabel("Petal length", fontsize=14)
+    plt.ylabel("Petal width", fontsize=14)
+    plt.title("MyLinearSVC", fontsize=14)
+    plt.axis([4, 6, 0.8, 2.8])
+
+    plt.subplot(122)
+    plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
+    plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
+    plot_svc_decision_boundary(svm_clf2, 4, 6)
+    plt.xlabel("Petal length", fontsize=14)
+    plt.title("SVC", fontsize=14)
+    plt.axis([4, 6, 0.8, 2.8])
+
+    sgd_clf = SGDClassifier(loss="hinge", alpha=0.017, max_iter=50, random_state=42)
+    sgd_clf.fit(X, y.ravel())
+
+    m = len(X)
+    t = y * 2 - 1  # -1 if t==0, +1 if t==1
+    X_b = np.c_[np.ones((m, 1)), X]  # Add bias input x0=1
+    X_b_t = X_b * t
+    sgd_theta = np.r_[sgd_clf.intercept_[0], sgd_clf.coef_[0]]
+    print(sgd_theta)
+    support_vectors_idx = (X_b_t.dot(sgd_theta) < 1).ravel()
+    sgd_clf.support_vectors_ = X[support_vectors_idx]
+    sgd_clf.C = C
+
+    plt.figure(figsize=(5.5, 3.2))
+    plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
+    plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
+    plot_svc_decision_boundary(sgd_clf, 4, 6)
+    plt.xlabel("Petal length", fontsize=14)
+    plt.ylabel("Petal width", fontsize=14)
+    plt.title("SGDClassifier", fontsize=14)
+    plt.axis([4, 6, 0.8, 2.8])
