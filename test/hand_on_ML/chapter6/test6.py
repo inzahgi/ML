@@ -158,60 +158,60 @@ if __name__ == '__main__':
     plt.show()
     ##  生成半环形数据
     Xm, ym = make_moons(n_samples=100, noise=0.25, random_state=53)
-
+    ##  分别按 无约束和设置最小叶节点为4  训练
     deep_tree_clf1 = DecisionTreeClassifier(random_state=42)
     deep_tree_clf2 = DecisionTreeClassifier(min_samples_leaf=4, random_state=42)
     deep_tree_clf1.fit(Xm, ym)
     deep_tree_clf2.fit(Xm, ym)
 
     plt.figure(figsize=(11, 4))
-    plt.subplot(121)
+    plt.subplot(121) ##  没有约束的训练  过拟合
     plot_decision_boundary(deep_tree_clf1, Xm, ym, axes=[-1.5, 2.5, -1, 1.5], iris=False)
     plt.title("No restrictions", fontsize=16)
-    plt.subplot(122)
+    plt.subplot(122)  ##  设置最小叶节点
     plot_decision_boundary(deep_tree_clf2, Xm, ym, axes=[-1.5, 2.5, -1, 1.5], iris=False)
     plt.title("min_samples_leaf = {}".format(deep_tree_clf2.min_samples_leaf), fontsize=14)
 
     save_fig("min_samples_leaf_plot")
     plt.show()
+    ##  画出带数据旋转的训练 结果
+    angle = np.pi / 180 * 20
+    rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    Xr = X.dot(rotation_matrix)
 
-#     angle = np.pi / 180 * 20
-#     rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
-#     Xr = X.dot(rotation_matrix)
-#
-#     tree_clf_r = DecisionTreeClassifier(random_state=42)
-#     tree_clf_r.fit(Xr, y)
-#
-#     plt.figure(figsize=(8, 3))
-#     plot_decision_boundary(tree_clf_r, Xr, y, axes=[0.5, 7.5, -1.0, 1], iris=False)
-#
-#     plt.show()
-#
-#     np.random.seed(6)
-#     Xs = np.random.rand(100, 2) - 0.5
-#     ys = (Xs[:, 0] > 0).astype(np.float32) * 2
-#
-#     angle = np.pi / 4
-#     rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
-#     Xsr = Xs.dot(rotation_matrix)
-#
-#     tree_clf_s = DecisionTreeClassifier(random_state=42)
-#     tree_clf_s.fit(Xs, ys)
-#     tree_clf_sr = DecisionTreeClassifier(random_state=42)
-#     tree_clf_sr.fit(Xsr, ys)
-#
-#     plt.figure(figsize=(11, 4))
-#     plt.subplot(121)
-#     plot_decision_boundary(tree_clf_s, Xs, ys, axes=[-0.7, 0.7, -0.7, 0.7], iris=False)
-#     plt.title('Figure 6-7. Sensitivity to training set rotation')
-#
-#     plt.subplot(122)
-#     plot_decision_boundary(tree_clf_sr, Xsr, ys, axes=[-0.7, 0.7, -0.7, 0.7], iris=False)
-#     plt.title('Figure 6-7. Sensitivity to training set rotation')
-#
-#     save_fig("sensitivity_to_rotation_plot")
-#     plt.show()
-#
+    tree_clf_r = DecisionTreeClassifier(random_state=42)
+    tree_clf_r.fit(Xr, y)
+
+    plt.figure(figsize=(8, 3))
+    plot_decision_boundary(tree_clf_r, Xr, y, axes=[0.5, 7.5, -1.0, 1], iris=False)
+
+    plt.show()
+    ##  对比数据选择的决策树生成情况
+    np.random.seed(6)
+    Xs = np.random.rand(100, 2) - 0.5
+    ys = (Xs[:, 0] > 0).astype(np.float32) * 2
+    ##  数据选择45度
+    angle = np.pi / 4
+    rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+    Xsr = Xs.dot(rotation_matrix)
+
+    tree_clf_s = DecisionTreeClassifier(random_state=42)
+    tree_clf_s.fit(Xs, ys)
+    tree_clf_sr = DecisionTreeClassifier(random_state=42)
+    tree_clf_sr.fit(Xsr, ys)
+
+    plt.figure(figsize=(11, 4))
+    plt.subplot(121)  ##  不带旋转的决策树
+    plot_decision_boundary(tree_clf_s, Xs, ys, axes=[-0.7, 0.7, -0.7, 0.7], iris=False)
+    plt.title('Figure 6-7. Sensitivity to training set rotation')
+
+    plt.subplot(122)  ##  带旋转的决策树
+    plot_decision_boundary(tree_clf_sr, Xsr, ys, axes=[-0.7, 0.7, -0.7, 0.7], iris=False)
+    plt.title('Figure 6-7. Sensitivity to training set rotation')
+
+    save_fig("sensitivity_to_rotation_plot")
+    plt.show()
+
 #     # Quadratic training set + noise
 #     np.random.seed(42)
 #     m = 200
