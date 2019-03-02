@@ -97,8 +97,8 @@ def plot_predictions(regressors, X, y, axes, label=None, style="r-", data_style=
 if __name__ == '__main__':
     heads_proba = 0.51 ## 设置 头朝上的概率
     coin_tosses = (np.random.rand(10000, 10) < heads_proba).astype(np.int32) ## 生成10000*10的判决矩阵
-    cumulative_heads_ratio = np.cumsum(coin_tosses, axis=0) / np.arange(1, 10001).reshape(-1, 1)  ##  
-
+    cumulative_heads_ratio = np.cumsum(coin_tosses, axis=0) / np.arange(1, 10001).reshape(-1, 1)  ##cumsum  形成梯形累加和的形式
+    ##  画出投掷的概率图
     plt.figure(figsize=(8, 3.5))
     plt.plot(cumulative_heads_ratio)
     plt.plot([0, 10000], [0.51, 0.51], "k--", linewidth=2, label="51%")
@@ -110,68 +110,68 @@ if __name__ == '__main__':
     save_fig("law_of_large_numbers_plot")
     plt.show()
 
+    ## 生成环型测试数据
+    X,y = make_moons(n_samples=500, noise=0.30, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    ## 分别生成 逻辑回归  随机森林  svm  训练器
+    log_clf = LogisticRegression(random_state=42)
+    rnd_clf = RandomForestClassifier(random_state=42)
+    svm_clf = SVC(random_state=42)
+    ##  生成一个硬投票表决器
+    voting_clf = VotingClassifier(
+        estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)],
+        voting='hard')
 
-    # X,y = make_moons(n_samples=500, noise=0.30, random_state=42)
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    #
-    # log_clf = LogisticRegression(random_state=42)
-    # rnd_clf = RandomForestClassifier(random_state=42)
-    # svm_clf = SVC(random_state=42)
-    #
-    # voting_clf = VotingClassifier(
-    #     estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)],
-    #     voting='hard')
-    #
-    # voting_clf.fit(X_train, y_train)
-    #
-    # for clf in (log_clf, rnd_clf, svm_clf, voting_clf):
-    #     clf.fit(X_train, y_train)
-    #     y_pred = clf.predict(X_test)
-    #     print(clf.__class__.__name__, accuracy_score(y_test, y_pred))
-    #
-    # log_clf = LogisticRegression(random_state=42)
-    # rnd_clf = RandomForestClassifier(random_state=42)
-    # svm_clf = SVC(probability=True, random_state=42)
-    #
-    # voting_clf = VotingClassifier(
-    #     estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)],
-    #     voting='soft')
-    #
-    # voting_clf.fit(X_train, y_train)
-    #
-    # for clf in (log_clf, rnd_clf, svm_clf, voting_clf):
-    #     clf.fit(X_train, y_train)
-    #     y_pred = clf.predict(X_test)
-    #     print(clf.__class__.__name__, accuracy_score(y_test, y_pred))
-    #
-    # bag_clf = BaggingClassifier(
-    #     DecisionTreeClassifier(random_state=42),  # 基类预测器
-    #     n_estimators=500,
-    #     max_samples=100,
-    #     bootstrap=True,
-    #     n_jobs=-1,
-    #     random_state=42
-    # )
-    #
-    # bag_clf.fit(X_train, y_train)
-    # y_pred = bag_clf.predict(X_test)
-    #
-    # print(accuracy_score(y_test, y_pred))
-    #
-    # tree_clf = DecisionTreeClassifier(random_state=42)
-    # tree_clf.fit(X_train, y_train)
-    # y_pred_tree = tree_clf.predict(X_test)
-    # print(accuracy_score(y_test, y_pred_tree))
-    #
-    # plt.figure(figsize=(11, 4))
-    # plt.subplot(121)
-    # plot_decision_boundary(tree_clf, X, y)
-    # plt.title("Decision Tree", fontsize=14)
-    # plt.subplot(122)
-    # plot_decision_boundary(bag_clf, X, y)
-    # plt.title("Decision Trees with Bagging", fontsize=14)
-    # save_fig("decision_tree_without_and_with_bagging_plot")
-    # plt.show()
+    voting_clf.fit(X_train, y_train)
+    ## 输出各个训练器的判决结果
+    for clf in (log_clf, rnd_clf, svm_clf, voting_clf):
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        print("line = 130 ", clf.__class__.__name__, accuracy_score(y_test, y_pred))
+
+    log_clf = LogisticRegression(random_state=42)
+    rnd_clf = RandomForestClassifier(random_state=42)
+    svm_clf = SVC(probability=True, random_state=42)
+    ##  尝试软投票训练 分类器
+    voting_clf = VotingClassifier(
+        estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)],
+        voting='soft')
+
+    voting_clf.fit(X_train, y_train)
+    ##  输出软投票的判决结果
+    for clf in (log_clf, rnd_clf, svm_clf, voting_clf):
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        print(clf.__class__.__name__, accuracy_score(y_test, y_pred))
+
+    bag_clf = BaggingClassifier(
+        DecisionTreeClassifier(random_state=42),  # 基类预测器
+        n_estimators=500,
+        max_samples=100,
+        bootstrap=True,
+        n_jobs=-1,
+        random_state=42
+    )
+
+    bag_clf.fit(X_train, y_train)
+    y_pred = bag_clf.predict(X_test)
+
+    print(accuracy_score(y_test, y_pred))
+
+    tree_clf = DecisionTreeClassifier(random_state=42)
+    tree_clf.fit(X_train, y_train)
+    y_pred_tree = tree_clf.predict(X_test)
+    print(accuracy_score(y_test, y_pred_tree))
+
+    plt.figure(figsize=(11, 4))
+    plt.subplot(121)
+    plot_decision_boundary(tree_clf, X, y)
+    plt.title("Decision Tree", fontsize=14)
+    plt.subplot(122)
+    plot_decision_boundary(bag_clf, X, y)
+    plt.title("Decision Trees with Bagging", fontsize=14)
+    save_fig("decision_tree_without_and_with_bagging_plot")
+    plt.show()
     #
     # bag_clf = BaggingClassifier(
     #     DecisionTreeClassifier(random_state=42),  # 基类预测器
