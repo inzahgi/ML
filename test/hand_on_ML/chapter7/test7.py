@@ -59,16 +59,16 @@ import warnings
 warnings.filterwarnings(action="ignore", message="^internal gelsd")
 
 
-
+##  画出判决边界
 def plot_decision_boundary(clf, X, y, axes=[-1.5, 2.5, -1, 1.5], alpha=0.5, contour=True):
     x1s = np.linspace(axes[0], axes[1], 100)
     x2s = np.linspace(axes[2], axes[3], 100)
-    x1, x2 = np.meshgrid(x1s, x2s)
+    x1, x2 = np.meshgrid(x1s, x2s)  ##  画出网格
     X_new = np.c_[x1.ravel(), x2.ravel()]
     y_pred = clf.predict(X_new).reshape(x1.shape)
     custom_cmap = ListedColormap(['#fafab0','#9898ff','#a0faa0'])
     plt.contourf(x1, x2, y_pred, alpha=0.3, cmap=custom_cmap)
-    if contour:
+    if contour:   ##  画出色盘
         custom_cmap2 = ListedColormap(['#7d7d58','#4c4c7f','#507d50'])
         plt.contour(x1, x2, y_pred, cmap=custom_cmap2, alpha=0.8)
     plt.plot(X[:, 0][y==0], X[:, 1][y==0], "yo", alpha=alpha)
@@ -143,7 +143,7 @@ if __name__ == '__main__':
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         print(clf.__class__.__name__, accuracy_score(y_test, y_pred))
-
+## bagging方法
     bag_clf = BaggingClassifier(
         DecisionTreeClassifier(random_state=42),  # 基类预测器
         n_estimators=500,
@@ -156,77 +156,77 @@ if __name__ == '__main__':
     bag_clf.fit(X_train, y_train)
     y_pred = bag_clf.predict(X_test)
 
-    print(accuracy_score(y_test, y_pred))
-
+    print("line = 159 accuracy_score(y_test, y_pred) = {}".format(accuracy_score(y_test, y_pred)))
+    ##  训练一棵决策树
     tree_clf = DecisionTreeClassifier(random_state=42)
     tree_clf.fit(X_train, y_train)
     y_pred_tree = tree_clf.predict(X_test)
     print(accuracy_score(y_test, y_pred_tree))
 
     plt.figure(figsize=(11, 4))
-    plt.subplot(121)
+    plt.subplot(121)  ##  决策树的判决边界
     plot_decision_boundary(tree_clf, X, y)
     plt.title("Decision Tree", fontsize=14)
-    plt.subplot(122)
+    plt.subplot(122)  ##  画出待bagging集成的决策树算法
     plot_decision_boundary(bag_clf, X, y)
     plt.title("Decision Trees with Bagging", fontsize=14)
     save_fig("decision_tree_without_and_with_bagging_plot")
     plt.show()
-    #
-    # bag_clf = BaggingClassifier(
-    #     DecisionTreeClassifier(random_state=42),  # 基类预测器
-    #     n_estimators=500,
-    #     bootstrap=True,
-    #     n_jobs=-1,
-    #     oob_score=True,
-    #     random_state=40
-    # )
-    #
-    # bag_clf.fit(X_train, y_train)
-    # bag_clf.oob_score_
-    #
-    # y_pred = bag_clf.predict(X_test)
-    # accuracy_score(y_test, y_pred)
-    #
-    # print("line = 166", bag_clf.oob_decision_function_)
-    #
-    # rdn_clf = RandomForestClassifier
-    # rnd_clf.fit(X_train, y_train)
-    #
-    # y_pred_rf = rnd_clf.predict(X_test)
-    #
-    # np.sum(y_pred == y_pred_rf) / len(y_pred)  # almost identical predictions
-    #
-    # bag_clf = BaggingClassifier(
-    #     DecisionTreeClassifier(splitter="random", max_leaf_nodes=16, random_state=42),
-    #     n_estimators=500,
-    #     max_samples=1.0,
-    #     bootstrap=True,
-    #     n_jobs=-1,
-    #     random_state=42
-    # )
-    #
-    # bag_clf.fit(X_train, y_train)
-    # y_pred = bag_clf.predict(X_test)
-    #
-    # iris = load_iris()
-    # rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1, random_state=42)
-    # rnd_clf.fit(iris["data"], iris["target"])
-    # for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
-    #     print(name, score)
-    #
-    #
-    # print("line = 195", rnd_clf.feature_importances_)
-    #
-    # plt.figure(figsize=(6, 4))
-    #
-    # for i in range(15):
-    #     tree_clf = DecisionTreeClassifier(max_leaf_nodes=16, random_state=42 + i)
-    #     indices_with_replacement = np.random.randint(0, len(X_train), len(X_train))
-    #     tree_clf.fit(X[indices_with_replacement], y[indices_with_replacement])
-    #     plot_decision_boundary(tree_clf, X, y, axes=[-1.5, 2.5, -1, 1.5], alpha=0.02, contour=False)
-    #
-    # plt.show()
+
+    bag_clf = BaggingClassifier(
+        DecisionTreeClassifier(random_state=42),  # 基类预测器
+        n_estimators=500,
+        bootstrap=True,
+        n_jobs=-1,
+        oob_score=True,
+        random_state=40
+    )
+
+    bag_clf.fit(X_train, y_train)
+    bag_clf.oob_score_
+
+    y_pred = bag_clf.predict(X_test)
+    accuracy_score(y_test, y_pred)
+
+    print("line = 191 bag_clf.oob_decision_function_= {}", bag_clf.oob_decision_function_)
+
+    rdn_clf = RandomForestClassifier
+    rnd_clf.fit(X_train, y_train)
+
+    y_pred_rf = rnd_clf.predict(X_test)
+
+    np.sum(y_pred == y_pred_rf) / len(y_pred)  # almost identical predictions
+
+    bag_clf = BaggingClassifier(
+        DecisionTreeClassifier(splitter="random", max_leaf_nodes=16, random_state=42),
+        n_estimators=500,
+        max_samples=1.0,
+        bootstrap=True,
+        n_jobs=-1,
+        random_state=42
+    )
+
+    bag_clf.fit(X_train, y_train)
+    y_pred = bag_clf.predict(X_test)
+
+    iris = load_iris()
+    rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1, random_state=42)
+    rnd_clf.fit(iris["data"], iris["target"])
+    for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
+        print(name, score)
+
+
+    print("line = 195", rnd_clf.feature_importances_)
+
+    plt.figure(figsize=(6, 4))
+
+    for i in range(15):
+        tree_clf = DecisionTreeClassifier(max_leaf_nodes=16, random_state=42 + i)
+        indices_with_replacement = np.random.randint(0, len(X_train), len(X_train))
+        tree_clf.fit(X[indices_with_replacement], y[indices_with_replacement])
+        plot_decision_boundary(tree_clf, X, y, axes=[-1.5, 2.5, -1, 1.5], alpha=0.02, contour=False)
+
+    plt.show()
     #
     # iris = load_iris()
     # rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1)
