@@ -173,6 +173,7 @@ if __name__ == '__main__':
     save_fig("decision_tree_without_and_with_bagging_plot")
     plt.show()
 
+# Out-of-Bag Evaluation   不重复
     bag_clf = BaggingClassifier(
         DecisionTreeClassifier(random_state=42),  # 基类预测器
         n_estimators=500,
@@ -183,19 +184,19 @@ if __name__ == '__main__':
     )
 
     bag_clf.fit(X_train, y_train)
-    bag_clf.oob_score_
+    print("line = 187 bag_clf.oob_score_ = {}".format(bag_clf.oob_score_))  ## 最终评估分数
 
     y_pred = bag_clf.predict(X_test)
-    accuracy_score(y_test, y_pred)
+    print("line = 190 accuracy_score(y_test, y_pred)) = {}".format(accuracy_score(y_test, y_pred))) ##  预测精度
 
-    print("line = 191 bag_clf.oob_decision_function_= {}", bag_clf.oob_decision_function_)
-
+    print("line = 191 bag_clf.oob_decision_function_= {}", bag_clf.oob_decision_function_) ## obb决策特征
+    ##  随机森林
     rdn_clf = RandomForestClassifier
     rnd_clf.fit(X_train, y_train)
 
     y_pred_rf = rnd_clf.predict(X_test)
 
-    np.sum(y_pred == y_pred_rf) / len(y_pred)  # almost identical predictions
+    print("line = 199 accuracy = {}".format(np.sum(y_pred == y_pred_rf) / len(y_pred)))  # almost identical predictions
 
     bag_clf = BaggingClassifier(
         DecisionTreeClassifier(splitter="random", max_leaf_nodes=16, random_state=42),
@@ -208,18 +209,17 @@ if __name__ == '__main__':
 
     bag_clf.fit(X_train, y_train)
     y_pred = bag_clf.predict(X_test)
-
+    ##  利用随机森林 训练 花瓣集
     iris = load_iris()
     rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1, random_state=42)
     rnd_clf.fit(iris["data"], iris["target"])
     for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
-        print(name, score)
+        print("line = 217 name = {} score = {}".format(name, score))
 
-
-    print("line = 195", rnd_clf.feature_importances_)
+    print("line = 219", rnd_clf.feature_importances_)
 
     plt.figure(figsize=(6, 4))
-
+    ##  迭代训练 画出判决图像
     for i in range(15):
         tree_clf = DecisionTreeClassifier(max_leaf_nodes=16, random_state=42 + i)
         indices_with_replacement = np.random.randint(0, len(X_train), len(X_train))
@@ -227,26 +227,27 @@ if __name__ == '__main__':
         plot_decision_boundary(tree_clf, X, y, axes=[-1.5, 2.5, -1, 1.5], alpha=0.02, contour=False)
 
     plt.show()
-    #
-    # iris = load_iris()
-    # rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1)
-    # rnd_clf.fit(iris["data"], iris["target"])
-    # for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
-    #     print(name, score)
-    #
-    # mnist = fetch_mldata('MNIST original', data_home='/home/inzahgi/test/jupyter/hand_on_ML/Hands-on-Machine-Learning/datasets')
-    #
-    # rnd_clf = RandomForestClassifier(random_state=42)
-    # rnd_clf.fit(mnist["data"], mnist["target"])
-    #
-    # plot_digit(rnd_clf.feature_importances_)
-    #
-    # cbar = plt.colorbar(ticks=[rnd_clf.feature_importances_.min(), rnd_clf.feature_importances_.max()])
-    # cbar.ax.set_yticklabels(['Not important', 'Very important'])
-    #
-    # save_fig("mnist_feature_importance_plot")
-    # plt.show()
-    #
+    ##  Extra-Trees
+    iris = load_iris()
+    rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1)
+    rnd_clf.fit(iris["data"], iris["target"])
+    ##  打印每个特征的重要程度
+    for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
+        print(name, score)
+    ##  获取手写图像数字
+    mnist = fetch_mldata('MNIST original', data_home='../chapter3/')
+
+    rnd_clf = RandomForestClassifier(random_state=42)
+    rnd_clf.fit(mnist["data"], mnist["target"])
+
+    plot_digit(rnd_clf.feature_importances_)
+
+    cbar = plt.colorbar(ticks=[rnd_clf.feature_importances_.min(), rnd_clf.feature_importances_.max()])
+    cbar.ax.set_yticklabels(['Not important', 'Very important'])
+
+    save_fig("mnist_feature_importance_plot")
+    plt.show()
+
     # ####  adaboost
     #
     # m = len(X_train)
