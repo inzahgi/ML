@@ -263,7 +263,7 @@ if __name__ == '__main__':
             sample_weights[y_pred != y_train] *= (1 + learning_rate)
             plot_decision_boundary(svm_clf, X, y, alpha=0.2)
             plt.title("learning_rate = {}".format(learning_rate), fontsize=16)
-        if subplot == 121:
+        if subplot == 121:  ##  初始情况
             plt.text(-0.7, -0.65, "1", fontsize=14)
             plt.text(-0.6, -0.10, "2", fontsize=14)
             plt.text(-0.5, 0.10, "3", fontsize=14)
@@ -272,75 +272,75 @@ if __name__ == '__main__':
 
     save_fig("boosting_plot")
     plt.show()
-    #
-    # list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
-    #
-    # ada_clf = AdaBoostClassifier(
-    #     DecisionTreeClassifier(max_depth=1),
-    #     n_estimators=200,
-    #     algorithm="SAMME.R",
-    #     learning_rate=0.5,
-    #     random_state=42)
-    #
-    # ada_clf.fit(X_train, y_train)
-    #
-    # np.random.seed(42)
-    # X = np.random.rand(100, 1) - 0.5
-    # y = 3 * X[:, 0] ** 2 + 0.05 * np.random.randn(100)
-    #
-    # tree_reg1 = DecisionTreeRegressor(max_depth=2)
-    # tree_reg1.fit(X, y)
-    #
-    # y2 = y - tree_reg1.predict(X)
-    # tree_reg2 = DecisionTreeRegressor(max_depth=2)
-    # tree_reg2.fit(X, y2)
-    #
-    # y3 = y2 - tree_reg2.predict(X)
-    # tree_reg3 = DecisionTreeRegressor(max_depth=2, random_state=42)
-    # tree_reg3.fit(X, y3)
-    #
-    # X_new = np.array([[0.8]])
-    #
-    # y_pred = sum(tree.predict(X_new) for tree in (tree_reg1, tree_reg2, tree_reg3))
-    # print("line = 291", y_pred)
-    #
-    # plt.figure(figsize=(11, 11))
-    #
-    # plt.subplot(321)
-    # plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h_1(x_1)$", style="g-",
-    #                  data_label="Training set")
-    # plt.ylabel("$y$", fontsize=16, rotation=0)
-    # plt.title("Residuals and tree predictions", fontsize=16)
-    #
-    # plt.subplot(322)
-    # plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1)$",
-    #                  data_label="Training set")
-    # plt.ylabel("$y$", fontsize=16, rotation=0)
-    # plt.title("Ensemble predictions", fontsize=16)
-    #
-    # plt.subplot(323)
-    # plot_predictions([tree_reg2], X, y2, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_2(x_1)$", style="g-", data_style="k+",
-    #                  data_label="Residuals")
-    # plt.ylabel("$y - h_1(x_1)$", fontsize=16)
-    #
-    # plt.subplot(324)
-    # plot_predictions([tree_reg1, tree_reg2], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1) + h_2(x_1)$")
-    # plt.ylabel("$y$", fontsize=16, rotation=0)
-    #
-    # plt.subplot(325)
-    # plot_predictions([tree_reg3], X, y3, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_3(x_1)$", style="g-", data_style="k+")
-    # plt.ylabel("$y - h_1(x_1) - h_2(x_1)$", fontsize=16)
-    # plt.xlabel("$x_1$", fontsize=16)
-    #
-    # plt.subplot(326)
-    # plot_predictions([tree_reg1, tree_reg2, tree_reg3], X, y, axes=[-0.5, 0.5, -0.1, 0.8],
-    #                  label="$h(x_1) = h_1(x_1) + h_2(x_1) + h_3(x_1)$")
-    # plt.xlabel("$x_1$", fontsize=16)
-    # plt.ylabel("$y$", fontsize=16, rotation=0)
-    #
-    # save_fig("gradient_boosting_plot")
-    # plt.show()
-    #
+
+    list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
+
+    ada_clf = AdaBoostClassifier(
+        DecisionTreeClassifier(max_depth=1),
+        n_estimators=200,
+        algorithm="SAMME.R",
+        learning_rate=0.5,
+        random_state=42)
+
+    ada_clf.fit(X_train, y_train)
+
+    np.random.seed(42)
+    X = np.random.rand(100, 1) - 0.5
+    y = 3 * X[:, 0] ** 2 + 0.05 * np.random.randn(100)
+
+    tree_reg1 = DecisionTreeRegressor(max_depth=2)
+    tree_reg1.fit(X, y)
+
+    y2 = y - tree_reg1.predict(X)
+    tree_reg2 = DecisionTreeRegressor(max_depth=2)
+    tree_reg2.fit(X, y2)
+
+    y3 = y2 - tree_reg2.predict(X)
+    tree_reg3 = DecisionTreeRegressor(max_depth=2, random_state=42)
+    tree_reg3.fit(X, y3)
+
+    X_new = np.array([[0.8]])
+
+    y_pred = sum(tree.predict(X_new) for tree in (tree_reg1, tree_reg2, tree_reg3))
+    print("line = 291", y_pred)
+
+    plt.figure(figsize=(11, 11))
+
+    plt.subplot(321)
+    plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h_1(x_1)$", style="g-",
+                     data_label="Training set")
+    plt.ylabel("$y$", fontsize=16, rotation=0)
+    plt.title("Residuals and tree predictions", fontsize=16)
+
+    plt.subplot(322)
+    plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1)$",
+                     data_label="Training set")
+    plt.ylabel("$y$", fontsize=16, rotation=0)
+    plt.title("Ensemble predictions", fontsize=16)
+
+    plt.subplot(323)
+    plot_predictions([tree_reg2], X, y2, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_2(x_1)$", style="g-", data_style="k+",
+                     data_label="Residuals")
+    plt.ylabel("$y - h_1(x_1)$", fontsize=16)
+
+    plt.subplot(324)
+    plot_predictions([tree_reg1, tree_reg2], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1) + h_2(x_1)$")
+    plt.ylabel("$y$", fontsize=16, rotation=0)
+
+    plt.subplot(325)
+    plot_predictions([tree_reg3], X, y3, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_3(x_1)$", style="g-", data_style="k+")
+    plt.ylabel("$y - h_1(x_1) - h_2(x_1)$", fontsize=16)
+    plt.xlabel("$x_1$", fontsize=16)
+
+    plt.subplot(326)
+    plot_predictions([tree_reg1, tree_reg2, tree_reg3], X, y, axes=[-0.5, 0.5, -0.1, 0.8],
+                     label="$h(x_1) = h_1(x_1) + h_2(x_1) + h_3(x_1)$")
+    plt.xlabel("$x_1$", fontsize=16)
+    plt.ylabel("$y$", fontsize=16, rotation=0)
+
+    save_fig("gradient_boosting_plot")
+    plt.show()
+
     # gbrt = GradientBoostingRegressor(
     #     max_depth=2,
     #     n_estimators=3,
