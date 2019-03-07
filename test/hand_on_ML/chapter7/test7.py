@@ -274,7 +274,7 @@ if __name__ == '__main__':
     plt.show()
 
     list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
-
+    ## adaboost 
     ada_clf = AdaBoostClassifier(
         DecisionTreeClassifier(max_depth=1),
         n_estimators=200,
