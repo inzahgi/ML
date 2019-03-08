@@ -274,7 +274,7 @@ if __name__ == '__main__':
     plt.show()
 
     list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
-    ## adaboost 
+    ## adaboost
     ada_clf = AdaBoostClassifier(
         DecisionTreeClassifier(max_depth=1),
         n_estimators=200,
@@ -283,14 +283,14 @@ if __name__ == '__main__':
         random_state=42)
 
     ada_clf.fit(X_train, y_train)
-
+    ##  生成训练数据
     np.random.seed(42)
     X = np.random.rand(100, 1) - 0.5
     y = 3 * X[:, 0] ** 2 + 0.05 * np.random.randn(100)
-
+    ##   对第一阶进行决策树 训练
     tree_reg1 = DecisionTreeRegressor(max_depth=2)
     tree_reg1.fit(X, y)
-
+    ##  获取残差  进行第二阶的训练
     y2 = y - tree_reg1.predict(X)
     tree_reg2 = DecisionTreeRegressor(max_depth=2)
     tree_reg2.fit(X, y2)
