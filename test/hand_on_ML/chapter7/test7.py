@@ -64,8 +64,8 @@ def plot_decision_boundary(clf, X, y, axes=[-1.5, 2.5, -1, 1.5], alpha=0.5, cont
     x1s = np.linspace(axes[0], axes[1], 100)
     x2s = np.linspace(axes[2], axes[3], 100)
     x1, x2 = np.meshgrid(x1s, x2s)  ##  画出网格
-    X_new = np.c_[x1.ravel(), x2.ravel()]
-    y_pred = clf.predict(X_new).reshape(x1.shape)
+    X_new = np.c_[x1.ravel(), x2.ravel()] ##  生成网格点数据
+    y_pred = clf.predict(X_new).reshape(x1.shape) ##  预测新的结果
     custom_cmap = ListedColormap(['#fafab0','#9898ff','#a0faa0'])
     plt.contourf(x1, x2, y_pred, alpha=0.3, cmap=custom_cmap)
     if contour:   ##  画出色盘
@@ -257,13 +257,13 @@ if __name__ == '__main__':
         sample_weights = np.ones(m)
         plt.subplot(subplot)
         for i in range(5):
-            svm_clf = SVC(kernel="rbf", C=0.05, random_state=42)
-            svm_clf.fit(X_train, y_train, sample_weight=sample_weights)
-            y_pred = svm_clf.predict(X_train)
-            sample_weights[y_pred != y_train] *= (1 + learning_rate)
-            plot_decision_boundary(svm_clf, X, y, alpha=0.2)
+            svm_clf = SVC(kernel="rbf", C=0.05, random_state=42)  ## 初始化svm训练器
+            svm_clf.fit(X_train, y_train, sample_weight=sample_weights)  ## 训练数据
+            y_pred = svm_clf.predict(X_train)  ##  预测结果
+            sample_weights[y_pred != y_train] *= (1 + learning_rate) ##  预测错误的地方 更新权重
+            plot_decision_boundary(svm_clf, X, y, alpha=0.2)  ##  画出决策边界
             plt.title("learning_rate = {}".format(learning_rate), fontsize=16)
-        if subplot == 121:  ##  初始情况
+        if subplot == 121:  ##  画出学习率为0时  不同线的收敛情况
             plt.text(-0.7, -0.65, "1", fontsize=14)
             plt.text(-0.6, -0.10, "2", fontsize=14)
             plt.text(-0.5, 0.10, "3", fontsize=14)
@@ -273,16 +273,18 @@ if __name__ == '__main__':
     save_fig("boosting_plot")
     plt.show()
 
-    list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
-    ## adaboost
+    ## adaboost  初始化算法
     ada_clf = AdaBoostClassifier(
         DecisionTreeClassifier(max_depth=1),
         n_estimators=200,
         algorithm="SAMME.R",
         learning_rate=0.5,
         random_state=42)
-
+    ##  训练adaboost
     ada_clf.fit(X_train, y_train)
+    ## 打印参数
+    list(m for m in dir(ada_clf) if not m.startswith("_") and m.endswith("_"))
+## gradient boosting
     ##  生成训练数据
     np.random.seed(42)
     X = np.random.rand(100, 1) - 0.5
@@ -294,44 +296,44 @@ if __name__ == '__main__':
     y2 = y - tree_reg1.predict(X)
     tree_reg2 = DecisionTreeRegressor(max_depth=2)
     tree_reg2.fit(X, y2)
-
+    ##  获取残差 进行第三阶的训练
     y3 = y2 - tree_reg2.predict(X)
     tree_reg3 = DecisionTreeRegressor(max_depth=2, random_state=42)
     tree_reg3.fit(X, y3)
 
     X_new = np.array([[0.8]])
-
+    ##  合并预测结果
     y_pred = sum(tree.predict(X_new) for tree in (tree_reg1, tree_reg2, tree_reg3))
-    print("line = 291", y_pred)
+    print("line = 307", y_pred)
 
     plt.figure(figsize=(11, 11))
-
+    ##  第一颗树的拟合情况
     plt.subplot(321)
     plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h_1(x_1)$", style="g-",
                      data_label="Training set")
     plt.ylabel("$y$", fontsize=16, rotation=0)
     plt.title("Residuals and tree predictions", fontsize=16)
-
+    ##  adaboost 一颗树 的拟合情况
     plt.subplot(322)
     plot_predictions([tree_reg1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1)$",
                      data_label="Training set")
     plt.ylabel("$y$", fontsize=16, rotation=0)
     plt.title("Ensemble predictions", fontsize=16)
-
+    ## 第二颗树 拟合残差的情况
     plt.subplot(323)
     plot_predictions([tree_reg2], X, y2, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_2(x_1)$", style="g-", data_style="k+",
                      data_label="Residuals")
     plt.ylabel("$y - h_1(x_1)$", fontsize=16)
-
+    ##  adaboost 两棵树的拟合情况
     plt.subplot(324)
     plot_predictions([tree_reg1, tree_reg2], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="$h(x_1) = h_1(x_1) + h_2(x_1)$")
     plt.ylabel("$y$", fontsize=16, rotation=0)
-
+    ##  第三棵树 拟合残差的情况
     plt.subplot(325)
     plot_predictions([tree_reg3], X, y3, axes=[-0.5, 0.5, -0.5, 0.5], label="$h_3(x_1)$", style="g-", data_style="k+")
     plt.ylabel("$y - h_1(x_1) - h_2(x_1)$", fontsize=16)
     plt.xlabel("$x_1$", fontsize=16)
-
+    ##  adaboost 三棵树的拟合情况
     plt.subplot(326)
     plot_predictions([tree_reg1, tree_reg2, tree_reg3], X, y, axes=[-0.5, 0.5, -0.1, 0.8],
                      label="$h(x_1) = h_1(x_1) + h_2(x_1) + h_3(x_1)$")
@@ -341,81 +343,82 @@ if __name__ == '__main__':
     save_fig("gradient_boosting_plot")
     plt.show()
 
-    # gbrt = GradientBoostingRegressor(
-    #     max_depth=2,
-    #     n_estimators=3,
-    #     learning_rate=1.0,
-    #     random_state=42
-    # )
-    #
-    # gbrt.fit(X, y)
-    #
-    # gbrt_slow_1 = GradientBoostingRegressor(
-    #     max_depth=2,
-    #     n_estimators=3,
-    #     learning_rate=0.1,
-    #     random_state=42
-    # )
-    #
-    # gbrt_slow_1.fit(X, y)
-    #
-    # gbrt_slow_2 = GradientBoostingRegressor(
-    #     max_depth=2,
-    #     n_estimators=200,
-    #     learning_rate=0.1,
-    #     random_state=42
-    # )
-    #
-    # gbrt_slow_2.fit(X, y)
-    #
-    # plt.figure(figsize=(11, 4))
-    #
-    # plt.subplot(121)
-    # plot_predictions([gbrt_slow_1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="Ensemble predictions")
-    # plt.title("learning_rate={}, n_estimators={}".format(gbrt.learning_rate, gbrt.n_estimators), fontsize=14)
-    #
-    # plt.subplot(122)
-    # plot_predictions([gbrt_slow_2], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
-    # plt.title("learning_rate={}, n_estimators={}".format(gbrt_slow.learning_rate, gbrt_slow.n_estimators), fontsize=14)
-    #
-    # save_fig("gbrt_learning_rate_plot")
-    # plt.show()
-    #
-    # X_train, X_val, y_train, y_val = train_test_split(X, y, random_state=49)
-    #
-    # gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=120, random_state=42)
-    # gbrt.fit(X_train, y_train)
-    #
-    # errors = [mean_squared_error(y_val, y_pred)
-    #           for y_pred in gbrt.staged_predict(X_val)]
-    #
-    # bst_n_estimators = np.argmin(errors)
-    #
-    # gbrt_best = GradientBoostingRegressor(max_depth=2, n_estimators=bst_n_estimators, random_state=42)
-    # gbrt_best.fit(X_train, y_train)
-    #
-    # min_error = np.min(errors)
-    # print(min_error)
-    #
-    # plt.figure(figsize=(11, 4))
-    #
-    # plt.subplot(121)
-    # plt.plot(errors, "b.-")
-    # plt.plot([bst_n_estimators, bst_n_estimators], [0, min_error], "k--")
-    # plt.plot([0, 120], [min_error, min_error], "k--")
-    # plt.plot(bst_n_estimators, min_error, "ko")
-    # plt.text(bst_n_estimators, min_error * 1.2, "Minimum", ha="center", fontsize=14)
-    # plt.axis([0, 120, 0, 0.01])
-    # plt.xlabel("Number of trees")
-    # plt.title("Validation error", fontsize=14)
-    #
-    # plt.subplot(122)
-    # plot_predictions([gbrt_best], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
-    # plt.title("Best model (%d trees)" % bst_n_estimators, fontsize=14)
-    #
-    # save_fig("early_stopping_gbrt_plot")
-    # plt.show()
-    #
+    ##  使用 GradientBoostingRegressor类  max_depth 最大深度  n_estimators 树的数量
+    gbrt = GradientBoostingRegressor(
+        max_depth=2,
+        n_estimators=3,
+        learning_rate=1.0,
+        random_state=42
+    )
+    ## 训练数据
+    gbrt.fit(X, y)
+    ##  调小学习率
+    gbrt_slow_1 = GradientBoostingRegressor(
+        max_depth=2,
+        n_estimators=3,
+        learning_rate=0.1,
+        random_state=42
+    )
+
+    gbrt_slow_1.fit(X, y)
+    ##  设置树的数量为 200
+    gbrt_slow_2 = GradientBoostingRegressor(
+        max_depth=2,
+        n_estimators=200,
+        learning_rate=0.1,
+        random_state=42
+    )
+
+    gbrt_slow_2.fit(X, y)
+
+    plt.figure(figsize=(11, 4))
+
+    plt.subplot(121)
+    plot_predictions([gbrt_slow_1], X, y, axes=[-0.5, 0.5, -0.1, 0.8], label="Ensemble predictions")
+    plt.title("learning_rate={}, n_estimators={}".format(gbrt_slow_1.learning_rate, gbrt_slow_1.n_estimators), fontsize=14)
+
+    plt.subplot(122)
+    plot_predictions([gbrt_slow_2], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
+    plt.title("learning_rate={}, n_estimators={}".format(gbrt_slow_2.learning_rate, gbrt_slow_2.n_estimators), fontsize=14)
+
+    save_fig("gbrt_learning_rate_plot")
+    plt.show()
+    ##  拆分训练集
+    X_train, X_val, y_train, y_val = train_test_split(X, y, random_state=49)
+    
+    gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=120, random_state=42)
+    gbrt.fit(X_train, y_train)
+
+    errors = [mean_squared_error(y_val, y_pred)
+              for y_pred in gbrt.staged_predict(X_val)]
+
+    bst_n_estimators = np.argmin(errors)
+
+    gbrt_best = GradientBoostingRegressor(max_depth=2, n_estimators=bst_n_estimators, random_state=42)
+    gbrt_best.fit(X_train, y_train)
+
+    min_error = np.min(errors)
+    print(min_error)
+
+    plt.figure(figsize=(11, 4))
+
+    plt.subplot(121)
+    plt.plot(errors, "b.-")
+    plt.plot([bst_n_estimators, bst_n_estimators], [0, min_error], "k--")
+    plt.plot([0, 120], [min_error, min_error], "k--")
+    plt.plot(bst_n_estimators, min_error, "ko")
+    plt.text(bst_n_estimators, min_error * 1.2, "Minimum", ha="center", fontsize=14)
+    plt.axis([0, 120, 0, 0.01])
+    plt.xlabel("Number of trees")
+    plt.title("Validation error", fontsize=14)
+
+    plt.subplot(122)
+    plot_predictions([gbrt_best], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
+    plt.title("Best model (%d trees)" % bst_n_estimators, fontsize=14)
+
+    save_fig("early_stopping_gbrt_plot")
+    plt.show()
+
     # gbrt = GradientBoostingRegressor(max_depth=2, warm_start=True, random_state=42)
     #
     # min_val_error = float("inf")
