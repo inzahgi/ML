@@ -28,7 +28,7 @@ from sklearn.metrics import mean_squared_error
 
 
 
-
+import timeit
 
 # To plot pretty figures
 # 导入绘图工具
@@ -385,86 +385,88 @@ if __name__ == '__main__':
     plt.show()
     ##  拆分训练集
     X_train, X_val, y_train, y_val = train_test_split(X, y, random_state=49)
-    
+    ###  训练带有 120棵树的GBRT集合
     gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=120, random_state=42)
     gbrt.fit(X_train, y_train)
-
+    ##  获取每一个阶段的误差
     errors = [mean_squared_error(y_val, y_pred)
               for y_pred in gbrt.staged_predict(X_val)]
-
+    ##  获取最佳 树木数量
     bst_n_estimators = np.argmin(errors)
-
+    ##  使用最佳树木数量训练另一个GBRT集合
     gbrt_best = GradientBoostingRegressor(max_depth=2, n_estimators=bst_n_estimators, random_state=42)
     gbrt_best.fit(X_train, y_train)
-
+    ##  获取最小误差
     min_error = np.min(errors)
     print(min_error)
 
     plt.figure(figsize=(11, 4))
 
-    plt.subplot(121)
-    plt.plot(errors, "b.-")
-    plt.plot([bst_n_estimators, bst_n_estimators], [0, min_error], "k--")
-    plt.plot([0, 120], [min_error, min_error], "k--")
-    plt.plot(bst_n_estimators, min_error, "ko")
+    plt.subplot(121) ##  画出 误差分析图
+    plt.plot(errors, "b.-")   ##  画出随着迭代训练  误差的变化情况
+    plt.plot([bst_n_estimators, bst_n_estimators], [0, min_error], "k--")  ##  画出 最佳树木数量时 到误差线的竖线
+    plt.plot([0, 120], [min_error, min_error], "k--") ##  画出最小误差 的横线
+    plt.plot(bst_n_estimators, min_error, "ko")   ##  画出 随着 树木变化  相应误差点数
     plt.text(bst_n_estimators, min_error * 1.2, "Minimum", ha="center", fontsize=14)
     plt.axis([0, 120, 0, 0.01])
     plt.xlabel("Number of trees")
     plt.title("Validation error", fontsize=14)
 
-    plt.subplot(122)
+    plt.subplot(122)  ##  最佳树木 数量 训练的gbrt 拟合情况
     plot_predictions([gbrt_best], X, y, axes=[-0.5, 0.5, -0.1, 0.8])
     plt.title("Best model (%d trees)" % bst_n_estimators, fontsize=14)
 
     save_fig("early_stopping_gbrt_plot")
     plt.show()
+###  早期停止法 训练 gbrt
+    gbrt = GradientBoostingRegressor(max_depth=2, warm_start=True, random_state=42)
 
-    # gbrt = GradientBoostingRegressor(max_depth=2, warm_start=True, random_state=42)
-    #
-    # min_val_error = float("inf")
-    # error_going_up = 0
-    # for n_estimators in range(1, 120):
-    #     gbrt.n_estimators = n_estimators
-    #     gbrt.fit(X_train, y_train)
-    #     y_pred = gbrt.predict(X_val)
-    #     val_error = mean_squared_error(y_val, y_pred)
-    #     if val_error < min_val_error:
-    #         min_val_error = val_error
-    #         error_going_up = 0
-    #     else:
-    #         error_going_up += 1
-    #         if error_going_up == 5:
-    #             break  # early stopping
-    #
-    #
-    # print("line = 436", gbrt.n_estimators)
-    # print("Minimum validation MSE:", min_error)
-    #
-    # try:
-    #     import xgboost
-    # except ImportError as ex:
-    #     print("Error: the xgboost library is not installed.")
-    #     xgboost = None
-    #
-    # if xgboost is not None:  # not shown in the book
-    #     xgb_reg = xgboost.XGBRegressor(random_state=42)
-    #     xgb_reg.fit(X_train, y_train)
-    #
-    #     y_pred = xgb_reg.predict(X_val)
-    #     val_error = mean_squared_error(y_val, y_pred)
-    #     print("Validation MSE:", val_error)
-    #
-    # if xgboost is not None:  # not shown in the book
-    #     xgb_reg.fit(X_train, y_train,
-    #                 eval_set=[(X_val, y_val)],
-    #                 early_stopping_rounds=2
-    #                 )
-    #     y_pred = xgb_reg.predict(X_val)
-    #     val_error = mean_squared_error(y_val, y_pred)
-    #     print("Validation MSE:", val_error)
-    #
-    # xgboost.XGBRegressor().fit(X_train, y_train) if xgboost is not None else None
-    #
-    # GradientBoostingRegressor().fit(X_train, y_train)
-    #
+    min_val_error = float("inf") ## 保存最小 误差
+    error_going_up = 0
+    for n_estimators in range(1, 120):
+        gbrt.n_estimators = n_estimators  ##  设置 树木 数量
+        gbrt.fit(X_train, y_train)  ##  训练
+        y_pred = gbrt.predict(X_val)
+        val_error = mean_squared_error(y_val, y_pred)
+        if val_error < min_val_error:  ##  当误差得到改进时 更新 保存当前记录值
+            min_val_error = val_error
+            error_going_up = 0
+        else:
+            error_going_up += 1
+            if error_going_up == 5: ##  当误差 连续5次 没有得到改进时 停止训练
+                break  # early stopping
+
+
+    print("line = 440  gbrt.n_estimators = {}".format(gbrt.n_estimators))
+    print("Minimum validation MSE: {}".format(min_error))
+
+####  xgboost
+    try:
+        import xgboost
+    except ImportError as ex:
+        print("Error: the xgboost library is not installed.")
+        xgboost = None
+    ##  使用 xgboost 默认参数训练
+    if xgboost is not None:  # not shown in the book
+        xgb_reg = xgboost.XGBRegressor(random_state=42)
+        xgb_reg.fit(X_train, y_train)
+
+        y_pred = xgb_reg.predict(X_val)
+        val_error = mean_squared_error(y_val, y_pred)
+        print("Validation MSE:", val_error)
+    ##  使用早期停止法
+    if xgboost is not None:  # not shown in the book
+        xgb_reg.fit(X_train, y_train,
+                    eval_set=[(X_val, y_val)],
+                    early_stopping_rounds=2
+                    )
+        y_pred = xgb_reg.predict(X_val)
+        val_error = mean_squared_error(y_val, y_pred)
+        print("Validation MSE:", val_error)
+
+    t1 = timeit.Timer('xgboost.XGBRegressor().fit(X_train, y_train) if xgboost is not None else None')
+    print("cost: {} ".format(t1))
+    t2 = timeit.Timer('GradientBoostingRegressor().fit(X_train, y_train)')
+    print("cost :{} ".format(t2))
+
 
