@@ -115,81 +115,82 @@ if __name__ == '__main__':
     np.allclose(X_centered, U.dot(S).dot(Vt))  ## 比较两个输入是否相同
 
     W2 = Vt.T[:, :2]
-    X2D = X_centered.dot(W2)
+    X2D = X_centered.dot(W2) ##  投影到二维空间
 
     X2D_using_svd = X2D
-
+    ##  使用pca类 降维到二维
     pca = PCA(n_components=2)
     X2D = pca.fit_transform(X)
 
 
-#     print("line = 75", X2D[:5])
-#     print("line = 76", X2D_using_svd[:5])
-#     print("line = 77", np.allclose(X2D, -X2D_using_svd))
-#
-#     X3D_inv = pca.inverse_transform(X2D)
-#
-#     print("line = 81", np.allclose(X3D_inv, X))
-#
-#     ## 计算重建误差
-#     print("line = 84", np.mean(np.sum(np.square(X3D_inv - X), axis=1)))
-#
-#     X3D_inv_using_svd = X2D_using_svd.dot(Vt[:2, :])
-#
-#     print("line = 88", np.allclose(X3D_inv_using_svd, X3D_inv - pca.mean))
-#     print("line = 89", pca.components_)
-#     print("line = 90", Vt[:2])
-#
-#     ##  解释方差比
-#     print("line = 93", pca.explained_variance_ratio_)
-#     print("line = 94", 1 - pca.explained_variance_ratio_.sum())
-#
-#     print("line = 96", np.square(s) / np.square(s).sum())
-#
-#     axes = [-1.8, 1.8, -1.3, 1.3, -1.0, 1.0]
-#
-#     x1s = np.linspace(axes[0], axes[1], 10)
-#     x2s = np.linspace(axes[2], axes[3], 10)
-#     x1, x2 = np.meshgrid(x1s, x2s)
-#
-#     C = pca.components_
-#     R = C.T.dot(C)
-#     z = (R[0, 2] * x1 + R[1, 2] * x2) / (1 - R[2, 2])
-#
-#     fig = plt.figure(figsize=(6, 3.8))
-#     ax = fig.add_subplot(111, projection='3d')
-#
-#     X3D_above = X[X[:, 2] > X3D_inv[:, 2]]
-#     X3D_below = X[X[:, 2] <= X3D_inv[:, 2]]
-#
-#     ax.plot(X3D_below[:, 0], X3D_below[:, 1], X3D_below[:, 2], "bo", alpha=0.5)
-#
-#     ax.plot_surface(x1, x2, z, alpha=0.2, color="k")
-#     np.linalg.norm(C, axis=0)
-#     ax.add_artist(
-#         Arrow3D([0, C[0, 0]], [0, C[0, 1]], [0, C[0, 2]], mutation_scale=15, lw=1, arrowstyle="-|>", color="k"))
-#     ax.add_artist(
-#         Arrow3D([0, C[1, 0]], [0, C[1, 1]], [0, C[1, 2]], mutation_scale=15, lw=1, arrowstyle="-|>", color="k"))
-#     ax.plot([0], [0], [0], "k.")
-#
-#     for i in range(m):
-#         if X[i, 2] > X3D_inv[i, 2]:
-#             ax.plot([X[i][0], X3D_inv[i][0]], [X[i][1], X3D_inv[i][1]], [X[i][2], X3D_inv[i][2]], "k-")
-#         else:
-#             ax.plot([X[i][0], X3D_inv[i][0]], [X[i][1], X3D_inv[i][1]], [X[i][2], X3D_inv[i][2]], "k-", color="#505050")
-#
-#     ax.plot(X3D_inv[:, 0], X3D_inv[:, 1], X3D_inv[:, 2], "k+")
-#     ax.plot(X3D_inv[:, 0], X3D_inv[:, 1], X3D_inv[:, 2], "k.")
-#     ax.plot(X3D_above[:, 0], X3D_above[:, 1], X3D_above[:, 2], "bo")
-#     ax.set_xlabel("$x_1$", fontsize=18)
-#     ax.set_ylabel("$x_2$", fontsize=18)
-#     ax.set_zlabel("$x_3$", fontsize=18)
-#     ax.set_xlim(axes[0:2])
-#     ax.set_ylim(axes[2:4])
-#     ax.set_zlim(axes[4:6])
-#
-#     save_fig("dataset_3d_plot")
-#     plt.show()
+    print("line = 126 X2D[:5] = {}".format(X2D[:5]))
+    print("line = 127 X2D_using_svd[:5] = {}".format(X2D_using_svd[:5]))
+    print("line = 128 np.allclose(X2D, -X2D_using_svd) = {}".format(np.allclose(X2D, -X2D_using_svd)))
+    ##  重建3D数据
+    X3D_inv = pca.inverse_transform(X2D)
+
+    print("line = 132 np.allclose(X3D_inv, X) = ".format(np.allclose(X3D_inv, X)))
+
+    ## 计算重建误差
+    print("line = 135 np.mean(np.sum(np.square(X3D_inv - X), axis=1)) = {}".format( np.mean(np.sum(np.square(X3D_inv - X), axis=1))))
+    ## SVD中矩阵逆变换
+    X3D_inv_using_svd = X2D_using_svd.dot(Vt[:2, :])
+    ##
+    print("line = 139 np.allclose(X3D_inv_using_svd, X3D_inv - pva.mean) = {}".format(np.allclose(X3D_inv_using_svd, X3D_inv - pca.mean)))
+    print("line = 140 pca.components_ = {}".format(pca.components_))
+    print("line = 141 Vt[:2] = {}".format(Vt[:2]))
+
+    ##  解释方差比
+    print("line = 144 pca.explained_variance_ratio_".format(pca.explained_variance_ratio_))
+    ##  方差损失率
+    print("line = 146 ", 1 - pca.explained_variance_ratio_.sum())
+    ##  使用svd方法后计算解释的方差比
+    print("line = 148", np.square(s) / np.square(s).sum())
+
+    axes = [-1.8, 1.8, -1.3, 1.3, -1.0, 1.0]
+
+    x1s = np.linspace(axes[0], axes[1], 10)
+    x2s = np.linspace(axes[2], axes[3], 10)
+    x1, x2 = np.meshgrid(x1s, x2s)
+
+    C = pca.components_
+    R = C.T.dot(C)
+    z = (R[0, 2] * x1 + R[1, 2] * x2) / (1 - R[2, 2])
+
+    fig = plt.figure(figsize=(6, 3.8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    X3D_above = X[X[:, 2] > X3D_inv[:, 2]]
+    X3D_below = X[X[:, 2] <= X3D_inv[:, 2]]
+
+    ax.plot(X3D_below[:, 0], X3D_below[:, 1], X3D_below[:, 2], "bo", alpha=0.5)
+
+    ax.plot_surface(x1, x2, z, alpha=0.2, color="k")
+    np.linalg.norm(C, axis=0)
+    ax.add_artist(
+        Arrow3D([0, C[0, 0]], [0, C[0, 1]], [0, C[0, 2]], mutation_scale=15, lw=1, arrowstyle="-|>", color="k"))
+    ax.add_artist(
+        Arrow3D([0, C[1, 0]], [0, C[1, 1]], [0, C[1, 2]], mutation_scale=15, lw=1, arrowstyle="-|>", color="k"))
+    ax.plot([0], [0], [0], "k.")
+
+    for i in range(m):
+        if X[i, 2] > X3D_inv[i, 2]:
+            ax.plot([X[i][0], X3D_inv[i][0]], [X[i][1], X3D_inv[i][1]], [X[i][2], X3D_inv[i][2]], "k-")
+        else:
+            ax.plot([X[i][0], X3D_inv[i][0]], [X[i][1], X3D_inv[i][1]], [X[i][2], X3D_inv[i][2]], "k-", color="#505050")
+
+    ax.plot(X3D_inv[:, 0], X3D_inv[:, 1], X3D_inv[:, 2], "k+")
+    ax.plot(X3D_inv[:, 0], X3D_inv[:, 1], X3D_inv[:, 2], "k.")
+    ax.plot(X3D_above[:, 0], X3D_above[:, 1], X3D_above[:, 2], "bo")
+    ax.set_xlabel("$x_1$", fontsize=18)
+    ax.set_ylabel("$x_2$", fontsize=18)
+    ax.set_zlabel("$x_3$", fontsize=18)
+    ax.set_xlim(axes[0:2])
+    ax.set_ylim(axes[2:4])
+    ax.set_zlim(axes[4:6])
+
+    save_fig("dataset_3d_plot")
+    plt.show()
 #
 #     fig = plt.figure()
 #     ax = fig.add_subplot(111, aspect='equal')
