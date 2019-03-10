@@ -136,7 +136,7 @@ if __name__ == '__main__':
     ## SVD中矩阵逆变换
     X3D_inv_using_svd = X2D_using_svd.dot(Vt[:2, :])
     ##
-    print("line = 139 np.allclose(X3D_inv_using_svd, X3D_inv - pva.mean) = {}".format(np.allclose(X3D_inv_using_svd, X3D_inv - pca.mean)))
+    print("line = 139 np.allclose(X3D_inv_using_svd, X3D_inv - pca.mean) = {}".format(np.allclose(X3D_inv_using_svd, X3D_inv - pca.mean_)))
     print("line = 140 pca.components_ = {}".format(pca.components_))
     print("line = 141 Vt[:2] = {}".format(Vt[:2]))
 
@@ -153,18 +153,18 @@ if __name__ == '__main__':
     x2s = np.linspace(axes[2], axes[3], 10)
     x1, x2 = np.meshgrid(x1s, x2s)
 
-    C = pca.components_
-    R = C.T.dot(C)
+    C = pca.components_  ##  pca 主成分
+    R = C.T.dot(C)   ##
     z = (R[0, 2] * x1 + R[1, 2] * x2) / (1 - R[2, 2])
 
     fig = plt.figure(figsize=(6, 3.8))
     ax = fig.add_subplot(111, projection='3d')
 
-    X3D_above = X[X[:, 2] > X3D_inv[:, 2]]
-    X3D_below = X[X[:, 2] <= X3D_inv[:, 2]]
-
+    X3D_above = X[X[:, 2] > X3D_inv[:, 2]]  ##  设置上层点
+    X3D_below = X[X[:, 2] <= X3D_inv[:, 2]]  ##  设置下层点
+    ##  画出下层点
     ax.plot(X3D_below[:, 0], X3D_below[:, 1], X3D_below[:, 2], "bo", alpha=0.5)
-
+    ##  画出超平面
     ax.plot_surface(x1, x2, z, alpha=0.2, color="k")
     np.linalg.norm(C, axis=0)
     ax.add_artist(
@@ -191,83 +191,83 @@ if __name__ == '__main__':
 
     save_fig("dataset_3d_plot")
     plt.show()
-#
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, aspect='equal')
-#
-#     ax.plot(X2D[:, 0], X2D[:, 1], "k+")
-#     ax.plot(X2D[:, 0], X2D[:, 1], "k.")
-#     ax.plot([0], [0], "ko")
-#     ax.arrow(0, 0, 0, 1, head_width=0.05, length_includes_head=True, head_length=0.1, fc='k', ec='k')
-#     ax.arrow(0, 0, 1, 0, head_width=0.05, length_includes_head=True, head_length=0.1, fc='k', ec='k')
-#     ax.set_xlabel("$z_1$", fontsize=18)
-#     ax.set_ylabel("$z_2$", fontsize=18, rotation=0)
-#     ax.axis([-1.5, 1.3, -1.2, 1.2])
-#     ax.grid(True)
-#     save_fig("dataset_2d_plot")
-#
-#     X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
-#
-#     axes = [-11.5, 14, -2, 23, -12, 15]
-#
-#     fig = plt.figure(figsize=(6, 5))
-#     ax = fig.add_subplot(111, projection='3d')
-#
-#     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=t, cmap=plt.cm.hot)
-#     ax.view_init(10, -70)
-#     ax.set_xlabel("$x_1$", fontsize=18)
-#     ax.set_ylabel("$x_2$", fontsize=18)
-#     ax.set_zlabel("$x_3$", fontsize=18)
-#     ax.set_xlim(axes[0:2])
-#     ax.set_ylim(axes[2:4])
-#     ax.set_zlim(axes[4:6])
-#
-#     save_fig("swiss_roll_plot")
-#     plt.show()
-#
-#     plt.figure(figsize=(11, 4))
-#
-#     plt.subplot(121)
-#     plt.scatter(X[:, 0], X[:, 1], c=t, cmap=plt.cm.hot)
-#     plt.axis(axes[:4])
-#     plt.xlabel("$x_1$", fontsize=18)
-#     plt.ylabel("$x_2$", fontsize=18, rotation=0)
-#     plt.grid(True)
-#
-#     plt.subplot(122)
-#     plt.scatter(t, X[:, 1], c=t, cmap=plt.cm.hot)
-#     plt.axis([4, 15, axes[2], axes[3]])
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.grid(True)
-#
-#     save_fig("squished_swiss_roll_plot")
-#     plt.show()
-#
-#     axes = [-11.5, 14, -2, 23, -12, 15]
-#
-#     x2s = np.linspace(axes[2], axes[3], 10)
-#     x3s = np.linspace(axes[4], axes[5], 10)
-#     x2, x3 = np.meshgrid(x2s, x3s)
-#
-#     fig = plt.figure(figsize=(6, 5))
-#     ax = plt.subplot(111, projection='3d')
-#
-#     positive_class = X[:, 0] > 5
-#     X_pos = X[positive_class]
-#     X_neg = X[~positive_class]
-#     ax.view_init(10, -70)
-#     ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^")
-#     ax.plot_wireframe(5, x2, x3, alpha=0.5)
-#     ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs")
-#     ax.set_xlabel("$x_1$", fontsize=18)
-#     ax.set_ylabel("$x_2$", fontsize=18)
-#     ax.set_zlabel("$x_3$", fontsize=18)
-#     ax.set_xlim(axes[0:2])
-#     ax.set_ylim(axes[2:4])
-#     ax.set_zlim(axes[4:6])
-#
-#     save_fig("manifold_decision_boundary_plot1")
-#     plt.show()
+    ##  画出映射后的  二维图像
+    fig = plt.figure()
+    ax = fig.add_subplot(111, aspect='equal')
+
+    ax.plot(X2D[:, 0], X2D[:, 1], "k+")
+    ax.plot(X2D[:, 0], X2D[:, 1], "k.")
+    ax.plot([0], [0], "ko")
+    ax.arrow(0, 0, 0, 1, head_width=0.05, length_includes_head=True, head_length=0.1, fc='k', ec='k')
+    ax.arrow(0, 0, 1, 0, head_width=0.05, length_includes_head=True, head_length=0.1, fc='k', ec='k')
+    ax.set_xlabel("$z_1$", fontsize=18)
+    ax.set_ylabel("$z_2$", fontsize=18, rotation=0)
+    ax.axis([-1.5, 1.3, -1.2, 1.2])
+    ax.grid(True)
+    save_fig("dataset_2d_plot")
+    ##  生成瑞士卷
+    X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
+
+    axes = [-11.5, 14, -2, 23, -12, 15]
+
+    fig = plt.figure(figsize=(6, 5))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=t, cmap=plt.cm.hot)
+    ax.view_init(10, -70)
+    ax.set_xlabel("$x_1$", fontsize=18)
+    ax.set_ylabel("$x_2$", fontsize=18)
+    ax.set_zlabel("$x_3$", fontsize=18)
+    ax.set_xlim(axes[0:2])
+    ax.set_ylim(axes[2:4])
+    ax.set_zlim(axes[4:6])
+
+    save_fig("swiss_roll_plot")
+    plt.show()
+
+    plt.figure(figsize=(11, 4))
+
+    plt.subplot(121)  ##  瑞士卷 映射一
+    plt.scatter(X[:, 0], X[:, 1], c=t, cmap=plt.cm.hot)
+    plt.axis(axes[:4])
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$x_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+
+    plt.subplot(122) ##  瑞士卷 映射二
+    plt.scatter(t, X[:, 1], c=t, cmap=plt.cm.hot)
+    plt.axis([4, 15, axes[2], axes[3]])
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.grid(True)
+
+    save_fig("squished_swiss_roll_plot")
+    plt.show()
+## 瑞士卷 不同的映射方式 生成不同的二维图像
+    axes = [-11.5, 14, -2, 23, -12, 15]
+
+    x2s = np.linspace(axes[2], axes[3], 10)
+    x3s = np.linspace(axes[4], axes[5], 10)
+    x2, x3 = np.meshgrid(x2s, x3s)
+
+    fig = plt.figure(figsize=(6, 5))
+    ax = plt.subplot(111, projection='3d')
+
+    positive_class = X[:, 0] > 5
+    X_pos = X[positive_class]
+    X_neg = X[~positive_class]
+    ax.view_init(10, -70)
+    ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^")
+    ax.plot_wireframe(5, x2, x3, alpha=0.5)
+    ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs")
+    ax.set_xlabel("$x_1$", fontsize=18)
+    ax.set_ylabel("$x_2$", fontsize=18)
+    ax.set_zlabel("$x_3$", fontsize=18)
+    ax.set_xlim(axes[0:2])
+    ax.set_ylim(axes[2:4])
+    ax.set_zlim(axes[4:6])
+
+    save_fig("manifold_decision_boundary_plot1")
+    plt.show()
 #
 #     fig = plt.figure(figsize=(5, 4))
 #     ax = plt.subplot(111)
