@@ -248,17 +248,17 @@ if __name__ == '__main__':
     x2s = np.linspace(axes[2], axes[3], 10)
     x3s = np.linspace(axes[4], axes[5], 10)
     x2, x3 = np.meshgrid(x2s, x3s)
-
+    ##  瑞士卷 正负值 沿x2,x3形成的平面切分
     fig = plt.figure(figsize=(6, 5))
     ax = plt.subplot(111, projection='3d')
 
-    positive_class = X[:, 0] > 5
-    X_pos = X[positive_class]
-    X_neg = X[~positive_class]
+    positive_class = X[:, 0] > 5 ## 设置正负阈值
+    X_pos = X[positive_class]  ## 获取正例掩码
+    X_neg = X[~positive_class]  ##  获取负例掩码
     ax.view_init(10, -70)
-    ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^")
+    ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^") ##  负例显示黄色三角
     ax.plot_wireframe(5, x2, x3, alpha=0.5)
-    ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs")
+    ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs") ##  正例显示绿色方块
     ax.set_xlabel("$x_1$", fontsize=18)
     ax.set_ylabel("$x_2$", fontsize=18)
     ax.set_zlabel("$x_3$", fontsize=18)
@@ -268,235 +268,236 @@ if __name__ == '__main__':
 
     save_fig("manifold_decision_boundary_plot1")
     plt.show()
-#
-#     fig = plt.figure(figsize=(5, 4))
-#     ax = plt.subplot(111)
-#
-#     plt.plot(t[positive_class], X[positive_class, 1], "gs")
-#     plt.plot(t[~positive_class], X[~positive_class, 1], "y^")
-#     plt.axis([4, 15, axes[2], axes[3]])
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.ylabel("$z_2$", fontsize=18, rotation=0)
-#     plt.grid(True)
-#
-#     save_fig("manifold_decision_boundary_plot2")
-#     plt.show()
-#
-#     fig = plt.figure(figsize=(6, 5))
-#     ax = plt.subplot(111, projection='3d')
-#
-#     positive_class = 2 * (t[:] - 4) > X[:, 1]
-#     X_pos = X[positive_class]
-#     X_neg = X[~positive_class]
-#     ax.view_init(10, -70)
-#     ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^")
-#     ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs")
-#     ax.set_xlabel("$x_1$", fontsize=18)
-#     ax.set_ylabel("$x_2$", fontsize=18)
-#     ax.set_zlabel("$x_3$", fontsize=18)
-#     ax.set_xlim(axes[0:2])
-#     ax.set_ylim(axes[2:4])
-#     ax.set_zlim(axes[4:6])
-#
-#     save_fig("manifold_decision_boundary_plot3")
-#     plt.show()
-#
-#
-#     fig = plt.figure(figsize=(5, 4))
-#     ax = plt.subplot(111)
-#
-#     plt.plot(t[positive_class], X[positive_class, 1], "gs")
-#     plt.plot(t[~positive_class], X[~positive_class, 1], "y^")
-#     plt.plot([4, 15], [0, 22], "b-", linewidth=2)
-#     plt.axis([4, 15, axes[2], axes[3]])
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.ylabel("$z_2$", fontsize=18, rotation=0)
-#     plt.grid(True)
-#
-#     save_fig("manifold_decision_boundary_plot4")
-#     plt.show()
-#
-#
-#
-# ### PCA
-#     angle = np.pi / 5
-#     stretch = 5
-#     m = 200
-#
-#     np.random.seed(3)
-#     X = np.random.randn(m, 2) / 10
-#     X = X.dot(np.array([[stretch, 0], [0, 1]]))  # stretch
-#     X = X.dot([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]])  # rotate
-#
-#     u1 = np.array([np.cos(angle), np.sin(angle)])
-#     u2 = np.array([np.cos(angle - 2 * np.pi / 6), np.sin(angle - 2 * np.pi / 6)])
-#     u3 = np.array([np.cos(angle - np.pi / 2), np.sin(angle - np.pi / 2)])
-#
-#     X_proj1 = X.dot(u1.reshape(-1, 1))
-#     X_proj2 = X.dot(u2.reshape(-1, 1))
-#     X_proj3 = X.dot(u3.reshape(-1, 1))
-#
-#     plt.figure(figsize=(8, 4))
-#     plt.subplot2grid((3, 2), (0, 0), rowspan=3)
-#     plt.plot([-1.4, 1.4], [-1.4 * u1[1] / u1[0], 1.4 * u1[1] / u1[0]], "k-", linewidth=1)
-#     plt.plot([-1.4, 1.4], [-1.4 * u2[1] / u2[0], 1.4 * u2[1] / u2[0]], "k--", linewidth=1)
-#     plt.plot([-1.4, 1.4], [-1.4 * u3[1] / u3[0], 1.4 * u3[1] / u3[0]], "k:", linewidth=2)
-#     plt.plot(X[:, 0], X[:, 1], "bo", alpha=0.5)
-#     plt.axis([-1.4, 1.4, -1.4, 1.4])
-#     plt.arrow(0, 0, u1[0], u1[1], head_width=0.1, linewidth=5, length_includes_head=True, head_length=0.1, fc='k',
-#               ec='k')
-#     plt.arrow(0, 0, u3[0], u3[1], head_width=0.1, linewidth=5, length_includes_head=True, head_length=0.1, fc='k',
-#               ec='k')
-#     plt.text(u1[0] + 0.1, u1[1] - 0.05, r"$\mathbf{c_1}$", fontsize=22)
-#     plt.text(u3[0] + 0.1, u3[1], r"$\mathbf{c_2}$", fontsize=22)
-#     plt.xlabel("$x_1$", fontsize=18)
-#     plt.ylabel("$x_2$", fontsize=18, rotation=0)
-#     plt.grid(True)
-#
-#     plt.subplot2grid((3, 2), (0, 1))
-#     plt.plot([-2, 2], [0, 0], "k-", linewidth=1)
-#     plt.plot(X_proj1[:, 0], np.zeros(m), "bo", alpha=0.3)
-#     plt.gca().get_yaxis().set_ticks([])
-#     plt.gca().get_xaxis().set_ticklabels([])
-#     plt.axis([-2, 2, -1, 1])
-#     plt.grid(True)
-#
-#     plt.subplot2grid((3, 2), (1, 1))
-#     plt.plot([-2, 2], [0, 0], "k--", linewidth=1)
-#     plt.plot(X_proj2[:, 0], np.zeros(m), "bo", alpha=0.3)
-#     plt.gca().get_yaxis().set_ticks([])
-#     plt.gca().get_xaxis().set_ticklabels([])
-#     plt.axis([-2, 2, -1, 1])
-#     plt.grid(True)
-#
-#     plt.subplot2grid((3, 2), (2, 1))
-#     plt.plot([-2, 2], [0, 0], "k:", linewidth=2)
-#     plt.plot(X_proj3[:, 0], np.zeros(m), "bo", alpha=0.3)
-#     plt.gca().get_yaxis().set_ticks([])
-#     plt.axis([-2, 2, -1, 1])
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.grid(True)
-#
-#     save_fig("pca_best_projection")
-#     plt.show()
-#
-#     pca = PCA()
-#     pca.fit(X)
-#     cumsum = np.cumsum(pca.explained_variance_ratio_)
-#     d = np.argmax(cumsum >= 0.95) + 1
-#
-#     pca = PCA(n_components=0.95)
-#     X_reduced = pca.fit_transform(X)
+    ##  正负值 沿x2,x3轴形成的平面切分后 映射成的二维图像
+    fig = plt.figure(figsize=(5, 4))
+    ax = plt.subplot(111)
+
+    plt.plot(t[positive_class], X[positive_class, 1], "gs")
+    plt.plot(t[~positive_class], X[~positive_class, 1], "y^")
+    plt.axis([4, 15, axes[2], axes[3]])
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.ylabel("$z_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+
+    save_fig("manifold_decision_boundary_plot2")
+    plt.show()
+    ##  瑞士卷 沿x1,x3 形成的平面 切分正负值
+    fig = plt.figure(figsize=(6, 5))
+    ax = plt.subplot(111, projection='3d')
+
+    positive_class = 2 * (t[:] - 4) > X[:, 1]
+    X_pos = X[positive_class]
+    X_neg = X[~positive_class]
+    ax.view_init(10, -70)
+    ax.plot(X_neg[:, 0], X_neg[:, 1], X_neg[:, 2], "y^")
+    ax.plot(X_pos[:, 0], X_pos[:, 1], X_pos[:, 2], "gs")
+    ax.set_xlabel("$x_1$", fontsize=18)
+    ax.set_ylabel("$x_2$", fontsize=18)
+    ax.set_zlabel("$x_3$", fontsize=18)
+    ax.set_xlim(axes[0:2])
+    ax.set_ylim(axes[2:4])
+    ax.set_zlim(axes[4:6])
+
+    save_fig("manifold_decision_boundary_plot3")
+    plt.show()
+
+    ## 正负值沿x1, x3轴形成的平面映射后的图像
+    fig = plt.figure(figsize=(5, 4))
+    ax = plt.subplot(111)
+
+    plt.plot(t[positive_class], X[positive_class, 1], "gs")
+    plt.plot(t[~positive_class], X[~positive_class, 1], "y^")
+    plt.plot([4, 15], [0, 22], "b-", linewidth=2)
+    plt.axis([4, 15, axes[2], axes[3]])
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.ylabel("$z_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+
+    save_fig("manifold_decision_boundary_plot4")
+    plt.show()
+
 #
 #
-#     mnist = fetch_mldata('MNIST original', data_home='/home/inzahgi/test/jupyter/hand_on_ML/Hands-on-Machine-Learning/datasets')
-#
-#
-#     X = mnist["data"]
-#     y = mnist["target"]
-#
-#     X_train, X_test, y_train, y_test = train_test_split(X, y)
-#
-#     pca = PCA()
-#     pca.fit(X_train)
-#     cumsum = np.cumsum(pca.explained_variance_ratio_)
-#     d = np.argmax(cumsum >= 0.95) + 1
-#
-#     print(d)
-#
-#     pca = PCA(n_components=0.95)
-#     X_reduced = pca.fit_transform(X_train)
-#
-#     print("line = 384", pca.n_components_)
-#     print("line = 385", np.sum(pca.explained_variance_ratio_))
-#
-#     pca = PCA(n_components=154)
-#     X_reduced = pca.fit_transform(X_train)
-#     X_recovered = pca.inverse_transform(X_reduced)
-#
-#     plt.figure(figsize=(7, 4))
-#     plt.subplot(121)
-#     plot_digits(X_train[::2100])
-#     plt.title("Original", fontsize=16)
-#     plt.subplot(122)
-#     plot_digits(X_recovered[::2100])
-#     plt.title("Compressed", fontsize=16)
-#
-#     save_fig("mnist_compression_plot")
-#
-#     X_reduced_pca = X_reduced
-#
-# ##  incremental PCA
-#     n_batches = 100
-#     inc_pca = IncrementalPCA(n_components=154)
-#     for X_batch in np.array_split(X_train, n_batches):
-#         inc_pca.partial_fit(X_batch)
-#
-#     X_reduced = inc_pca.transform(X_train)
-#
-#     X_recovered_inc_pca = inc_pca.inverse_transform(X_reduced)
-#
-#     plt.figure(figsize=(7, 4))
-#     plt.subplot(121)
-#     plot_digits(X_train[::2100])
-#     plt.subplot(122)
-#     plot_digits(X_recovered_inc_pca[::2100])
-#     plt.tight_layout()
-#
-#     X_reduced_inc_pca = X_reduced
-#
-#     print("line = 437", np.allclose(pca.mean_, inc_pca.mean_))
-#     print("line = 438", np.allclose(X_reduced_pca, X_reduced_inc_pca))
-#
-#     filename = "my_mnist.data"
-#     m, n = X_train.shape
-#
-#     X_mm = np.memmap(filename, dtype='float32', mode='write', shape=(m, n))
-#     X_mm[:] = X_train
-#
-#     del X_mm
-#
-#     X_mm = np.memmap(filename, dtype="float32", mode="readonly", shape=(m, n))
-#
-#     batch_size = m // n_batches
-#     inc_pca = IncrementalPCA(n_components=154, batch_size=batch_size)
-#     inc_pca.fit(X_mm)
-#
-#     rnd_pca = PCA(n_components=154, svd_solver="randomized", random_state=42)
-#     X_reduced = rnd_pca.fit_transform(X_train)
-#
-#
-#     ##  Kernel PCA
-#     X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
-#
-#     rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.04)
-#     X_reduced = rbf_pca.fit_transform(X)
-#
-#     lin_pca = KernelPCA(n_components=2, kernel="linear", fit_inverse_transform=True)
-#     rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.0433, fit_inverse_transform=True)
-#     sig_pca = KernelPCA(n_components=2, kernel="sigmoid", gamma=0.001, coef0=1, fit_inverse_transform=True)
-#
-#     y = t > 6.9
-#
-#     plt.figure(figsize=(11, 4))
-#     for subplot, pca, title in ((131, lin_pca, "Linear kernel"), (132, rbf_pca, "RBF kernel, $\gamma=0.04$"),
-#                                 (133, sig_pca, "Sigmoid kernel, $\gamma=10^{-3}, r=1$")):
-#         X_reduced = pca.fit_transform(X)
-#         if subplot == 132:
-#             X_reduced_rbf = X_reduced
-#
-#         plt.subplot(subplot)
-#         # plt.plot(X_reduced[y, 0], X_reduced[y, 1], "gs")
-#         # plt.plot(X_reduced[~y, 0], X_reduced[~y, 1], "y^")
-#         plt.title(title, fontsize=14)
-#         plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
-#         plt.xlabel("$z_1$", fontsize=18)
-#         if subplot == 131:
-#             plt.ylabel("$z_2$", fontsize=18, rotation=0)
-#         plt.grid(True)
-#
-#     save_fig("kernel_pca_plot")
-#     plt.show()
+### PCA
+    angle = np.pi / 5
+    stretch = 5
+    m = 200
+    ##  生成原始数据
+    np.random.seed(3) ##并对其进行加强和选择
+    X = np.random.randn(m, 2) / 10
+    X = X.dot(np.array([[stretch, 0], [0, 1]]))  # stretch
+    X = X.dot([[np.cos(angle), np.sin(angle)], [-np.sin(angle), np.cos(angle)]])  # rotate
+    ##  生成三种不同方向向量
+    u1 = np.array([np.cos(angle), np.sin(angle)])
+    u2 = np.array([np.cos(angle - 2 * np.pi / 6), np.sin(angle - 2 * np.pi / 6)])
+    u3 = np.array([np.cos(angle - np.pi / 2), np.sin(angle - np.pi / 2)])
+    ##  对三种不同向量 生成映射点
+    X_proj1 = X.dot(u1.reshape(-1, 1))
+    X_proj2 = X.dot(u2.reshape(-1, 1))
+    X_proj3 = X.dot(u3.reshape(-1, 1))
+
+    plt.figure(figsize=(8, 4))
+    plt.subplot2grid((3, 2), (0, 0), rowspan=3) ## 左边的原始点和映射向量
+    plt.plot([-1.4, 1.4], [-1.4 * u1[1] / u1[0], 1.4 * u1[1] / u1[0]], "k-", linewidth=1)
+    plt.plot([-1.4, 1.4], [-1.4 * u2[1] / u2[0], 1.4 * u2[1] / u2[0]], "k--", linewidth=1)
+    plt.plot([-1.4, 1.4], [-1.4 * u3[1] / u3[0], 1.4 * u3[1] / u3[0]], "k:", linewidth=2)
+    plt.plot(X[:, 0], X[:, 1], "bo", alpha=0.5)
+    plt.axis([-1.4, 1.4, -1.4, 1.4])
+    plt.arrow(0, 0, u1[0], u1[1], head_width=0.1, linewidth=5, length_includes_head=True, head_length=0.1, fc='k',
+              ec='k')
+    plt.arrow(0, 0, u3[0], u3[1], head_width=0.1, linewidth=5, length_includes_head=True, head_length=0.1, fc='k',
+              ec='k')
+    plt.text(u1[0] + 0.1, u1[1] - 0.05, r"$\mathbf{c_1}$", fontsize=22)
+    plt.text(u3[0] + 0.1, u3[1], r"$\mathbf{c_2}$", fontsize=22)
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.ylabel("$x_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+    ##  映射到u1的点分布情况
+    plt.subplot2grid((3, 2), (0, 1))
+    plt.plot([-2, 2], [0, 0], "k-", linewidth=1)
+    plt.plot(X_proj1[:, 0], np.zeros(m), "bo", alpha=0.3)
+    plt.gca().get_yaxis().set_ticks([])
+    plt.gca().get_xaxis().set_ticklabels([])
+    plt.axis([-2, 2, -1, 1])
+    plt.grid(True)
+    ##  映射到u2的点分布情况
+    plt.subplot2grid((3, 2), (1, 1))
+    plt.plot([-2, 2], [0, 0], "k--", linewidth=1)
+    plt.plot(X_proj2[:, 0], np.zeros(m), "bo", alpha=0.3)
+    plt.gca().get_yaxis().set_ticks([])
+    plt.gca().get_xaxis().set_ticklabels([])
+    plt.axis([-2, 2, -1, 1])
+    plt.grid(True)
+    ##  映射到u3的点分布
+    plt.subplot2grid((3, 2), (2, 1))
+    plt.plot([-2, 2], [0, 0], "k:", linewidth=2)
+    plt.plot(X_proj3[:, 0], np.zeros(m), "bo", alpha=0.3)
+    plt.gca().get_yaxis().set_ticks([])
+    plt.axis([-2, 2, -1, 1])
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.grid(True)
+
+    save_fig("pca_best_projection")
+    plt.show()
+    ##  使用pca 方法 设置方差解释率大于95%时的维度
+    pca = PCA()
+    pca.fit(X)
+    cumsum = np.cumsum(pca.explained_variance_ratio_)
+    d = np.argmax(cumsum >= 0.95) + 1
+    ##  直接设置 n_components 相应的方差解释率
+    pca = PCA(n_components=0.95)
+    X_reduced = pca.fit_transform(X)
+
+
+    mnist = fetch_mldata('MNIST original', data_home='/home/inzahgi/test/jupyter/hand_on_ML/Hands-on-Machine-Learning/datasets')
+
+
+    X = mnist["data"]
+    y = mnist["target"]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    ##  获取mnist图像 方差解释率为95%时的维度
+    pca = PCA()
+    pca.fit(X_train)
+    cumsum = np.cumsum(pca.explained_variance_ratio_)
+    d = np.argmax(cumsum >= 0.95) + 1
+
+    print("line = 405 d = {}".format(d))
+
+    pca = PCA(n_components=0.95)
+    X_reduced = pca.fit_transform(X_train)
+
+    print("line = 410 pca.n_components_ = {}", pca.n_components_)
+    print("line = 411 np.sum(pca.explained_variance_ratio_) = {}".format(np.sum(pca.explained_variance_ratio_)))
+    ##  设置pca为154维度后 生成 映射数据和逆转数据
+    pca = PCA(n_components=154)
+    X_reduced = pca.fit_transform(X_train)
+    X_recovered = pca.inverse_transform(X_reduced)
+    ##  画出原始点和压缩后的点
+    plt.figure(figsize=(7, 4))
+    plt.subplot(121)
+    plot_digits(X_train[::2100])
+    plt.title("Original", fontsize=16)
+    plt.subplot(122)
+    plot_digits(X_recovered[::2100])
+    plt.title("Compressed", fontsize=16)
+
+    save_fig("mnist_compression_plot")
+
+    X_reduced_pca = X_reduced
+
+##  incremental PCA  增量pca
+    n_batches = 100
+    inc_pca = IncrementalPCA(n_components=154)
+    ##  分小批次 训练
+    for X_batch in np.array_split(X_train, n_batches):
+        inc_pca.partial_fit(X_batch)
+
+    X_reduced = inc_pca.transform(X_train)
+
+    X_recovered_inc_pca = inc_pca.inverse_transform(X_reduced)
+    ##  对比 原始数据和 增量pca降维后还原的数据
+    plt.figure(figsize=(7, 4))
+    plt.subplot(121)
+    plot_digits(X_train[::2100])
+    plt.subplot(122)
+    plot_digits(X_recovered_inc_pca[::2100])
+    plt.tight_layout()
+
+    X_reduced_inc_pca = X_reduced
+
+    print("line = 449 np.allclose(pca.mean_, inc_pca.mean_) = {}".format(np.allclose(pca.mean_, inc_pca.mean_)))
+    print("line = 450 np.allclose(X_reduced_pca, X_reduced_inc_pca) = {}".format(np.allclose(X_reduced_pca, X_reduced_inc_pca)))
+
+    filename = "my_mnist.data"
+    m, n = X_train.shape
+    ## 通过内存映射的方式获取 数据
+    X_mm = np.memmap(filename, dtype='float32', mode='write', shape=(m, n))
+    X_mm[:] = X_train
+    ## 现在删除memmap（）对象将触发其Python终结器，确保将数据保存到磁盘。
+    del X_mm
+
+    X_mm = np.memmap(filename, dtype="float32", mode="readonly", shape=(m, n))
+
+    batch_size = m // n_batches
+    inc_pca = IncrementalPCA(n_components=154, batch_size=batch_size)
+    inc_pca.fit(X_mm)
+    ##  随机pca
+    rnd_pca = PCA(n_components=154, svd_solver="randomized", random_state=42)
+    X_reduced = rnd_pca.fit_transform(X_train)
+
+
+    ##  Kernel PCA
+    X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
+    ##  生成rbf_pca 类
+    rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.04)
+    X_reduced = rbf_pca.fit_transform(X)  ## 利用rbf核函数 对瑞士卷降维
+    ##  线性核  rbf核  sigmoid冲击函数核
+    lin_pca = KernelPCA(n_components=2, kernel="linear", fit_inverse_transform=True)
+    rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.0433, fit_inverse_transform=True)
+    sig_pca = KernelPCA(n_components=2, kernel="sigmoid", gamma=0.001, coef0=1, fit_inverse_transform=True)
+
+    y = t > 6.9
+
+    plt.figure(figsize=(11, 4))
+    for subplot, pca, title in ((131, lin_pca, "Linear kernel"), (132, rbf_pca, "RBF kernel, $\gamma=0.04$"),
+                                (133, sig_pca, "Sigmoid kernel, $\gamma=10^{-3}, r=1$")):
+        X_reduced = pca.fit_transform(X)
+        if subplot == 132:
+            X_reduced_rbf = X_reduced
+
+        plt.subplot(subplot)
+        # plt.plot(X_reduced[y, 0], X_reduced[y, 1], "gs")
+        # plt.plot(X_reduced[~y, 0], X_reduced[~y, 1], "y^")
+        plt.title(title, fontsize=14)
+        plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
+        plt.xlabel("$z_1$", fontsize=18)
+        if subplot == 131:
+            plt.ylabel("$z_2$", fontsize=18, rotation=0)
+        plt.grid(True)
+
+    save_fig("kernel_pca_plot")
+    plt.show()
 #
 #     plt.figure(figsize=(6, 5))
 #
