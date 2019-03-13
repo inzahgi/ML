@@ -478,7 +478,7 @@ if __name__ == '__main__':
     sig_pca = KernelPCA(n_components=2, kernel="sigmoid", gamma=0.001, coef0=1, fit_inverse_transform=True)
 
     y = t > 6.9
-
+    ## 分别输出 线性 rbf sigmoid 核函数降维后的图像
     plt.figure(figsize=(11, 4))
     for subplot, pca, title in ((131, lin_pca, "Linear kernel"), (132, rbf_pca, "RBF kernel, $\gamma=0.04$"),
                                 (133, sig_pca, "Sigmoid kernel, $\gamma=10^{-3}, r=1$")):
@@ -498,111 +498,111 @@ if __name__ == '__main__':
 
     save_fig("kernel_pca_plot")
     plt.show()
-#
-#     plt.figure(figsize=(6, 5))
-#
-#     X_inverse = rbf_pca.inverse_transform(X_reduced_rbf)
-#
-#     ax = plt.subplot(111, projection='3d')
-#     ax.view_init(10, -70)
-#     ax.scatter(X_inverse[:, 0], X_inverse[:, 1], X_inverse[:, 2], c=t, cmap=plt.cm.hot, marker="x")
-#     ax.set_xlabel("")
-#     ax.set_ylabel("")
-#     ax.set_zlabel("")
-#     ax.set_xticklabels([])
-#     ax.set_yticklabels([])
-#     ax.set_zticklabels([])
-#
-#     save_fig("preimage_plot", tight_layout=False)
-#     plt.show()
-#
-#     X_reduced = rbf_pca.fit_transform(X)
-#
-#     plt.figure(figsize=(11, 4))
-#     plt.subplot(132)
-#     plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot, marker="x")
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.ylabel("$z_2$", fontsize=18, rotation=0)
-#     plt.grid(True)
-#
-#     clf = Pipeline([
-#         ("kpca", KernelPCA(n_components=2)),
-#         ("log_reg", LogisticRegression())
-#     ])
-#
-#     param_grid = [{
-#         "kpca__gamma": np.linspace(0.03, 0.05, 10),
-#         "kpca__kernel": ["rbf", "sigmoid"]
-#     }]
-#
-#     grid_search = GridSearchCV(clf, param_grid, cv=3)
-#     grid_search.fit(X, y)
-#
-#     print("line = 531", grid_search.best_params_)
-#
-#     rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.0433,
-#                         fit_inverse_transform=True)
-#
-#     X_reduced = rbf_pca.fit_transform(X)
-#     X_preimage = rbf_pca.inverse_transform(X_reduced)
-#
-#     print("line = 539", mean_squared_error(X, X_preimage))
-#
-#
-#
-# ##  LLE
-#
-#     X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
-#
-#     lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10)
-#     X_reduced = lle.fit_transform(x)
-#
-#     plt.title("Unrolled swiss roll using LLE", fontsize=14)
-#     plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
-#     plt.xlabel("$z_1$", fontsize=18)
-#     plt.ylabel("$z_2$", fontsize=18)
-#     plt.axis([-0.065, 0.055, -0.1, 0.12])
-#     plt.grid(True)
-#
-#     save_fig("lle_unrolling_plot")
-#     plt.show()
-#
-#
-# ##  其他降维技术
-#
-#     mds = MDS(n_components=2, random_state=42)
-#     X_reduced_mds = mds.fit_transform(X)
-#
-#
-#     isomap = Isomap(n_components=2)
-#     X_reduced_isomap = isomap.fit_transform(X)
-#
-#
-#     tsne = TSNE(n_components=2, random_state=42)
-#     X_reduced_tsne = tsne.fit_transform(X)
-#
-#     lda = LinearDiscriminantAnalysis(n_components=2)
-#     X_mnist = mnist["data"]
-#     y_mnist = mnist["target"]
-#     lda.fit(X_mnist, y_mnist)
-#     X_reduced_lda = lda.transform(X_mnist)
-#
-#     titles = ["MDS", "Isomap", "t-SNE"]
-#
-#     plt.figure(figsize=(11, 4))
-#
-#     for subplot, title, X_reduced in zip((131, 132, 133), titles,
-#                                          (X_reduced_mds, X_reduced_isomap, X_reduced_tsne)):
-#         plt.subplot(subplot)
-#         plt.title(title, fontsize=14)
-#         plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
-#         plt.xlabel("$z_1$", fontsize=18)
-#         if subplot == 131:
-#             plt.ylabel("$z_2$", fontsize=18, rotation=0)
-#         plt.grid(True)
-#
-#     save_fig("other_dim_reduction_plot")
-#     plt.show()
-#
-#
+    ##  绘制重建 rbf 降维后的图像
+    plt.figure(figsize=(6, 5))
+    ##  重建原始数据
+    X_inverse = rbf_pca.inverse_transform(X_reduced_rbf)
+
+    ax = plt.subplot(111, projection='3d')
+    ax.view_init(10, -70)
+    ax.scatter(X_inverse[:, 0], X_inverse[:, 1], X_inverse[:, 2], c=t, cmap=plt.cm.hot, marker="x")
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.set_zlabel("")
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.set_zticklabels([])
+
+    save_fig("preimage_plot", tight_layout=False)
+    plt.show()
+    ##  画出降维后的映射图像
+    X_reduced = rbf_pca.fit_transform(X)
+
+    plt.figure(figsize=(11, 4))
+    plt.subplot(132)
+    plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot, marker="x")
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.ylabel("$z_2$", fontsize=18, rotation=0)
+    plt.grid(True)
+    ##  对kpca算法 使用网格搜索 找出最佳维度
+    clf = Pipeline([
+        ("kpca", KernelPCA(n_components=2)),
+        ("log_reg", LogisticRegression())
+    ])
+
+    param_grid = [{
+        "kpca__gamma": np.linspace(0.03, 0.05, 10),
+        "kpca__kernel": ["rbf", "sigmoid"]
+    }]
+
+    grid_search = GridSearchCV(clf, param_grid, cv=3)
+    grid_search.fit(X, y)
+    ##  打印网格搜索到的最佳参数
+    print("line = 541 grid_search.best_params_ = {}".format(grid_search.best_params_))
+    ##  设置 fit_inverse_transform 为true  使用监督训练模型的方式  以降维数据为输入 原始数据为 目标数据  调整参数
+    rbf_pca = KernelPCA(n_components=2, kernel="rbf", gamma=0.0433,
+                        fit_inverse_transform=True)
+
+    X_reduced = rbf_pca.fit_transform(X)
+    X_preimage = rbf_pca.inverse_transform(X_reduced)
+
+    print("line = 549  mean_squared_error(X, X_preimage) = {}".format(mean_squared_error(X, X_preimage)))
+
+
+
+##  LLE  流型嵌入技术
+
+    X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
+
+    lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10)
+    X_reduced = lle.fit_transform(x)
+
+    plt.title("Unrolled swiss roll using LLE", fontsize=14)
+    plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
+    plt.xlabel("$z_1$", fontsize=18)
+    plt.ylabel("$z_2$", fontsize=18)
+    plt.axis([-0.065, 0.055, -0.1, 0.12])
+    plt.grid(True)
+
+    save_fig("lle_unrolling_plot")
+    plt.show()
+
+
+##  其他降维技术
+    ##  多维缩放MD  )在尝试保留实例之间的距离时降低了维度
+    mds = MDS(n_components=2, random_state=42)
+    X_reduced_mds = mds.fit_transform(X)
+    ##  isomap 通过将每个实例连接到最近的邻居来创建图形，然后在尝试保持实例之间的测地距离时降低维数
+    isomap = Isomap(n_components=2)
+    X_reduced_isomap = isomap.fit_transform(X)
+    ##t分布随机邻域嵌入- t-Distributed Stochastic Neighbor Embedding (t-SNE) 降低了维数同时试图让类似的实例保持接近，
+    # 并将不同的实例分开。它主要用于可视化，特别地，可视化高维空间中的实例簇
+    tsne = TSNE(n_components=2, random_state=42)
+    X_reduced_tsne = tsne.fit_transform(X)
+    ## 线性判别分析- Linear Discriminant Analysis（LDA）实际上是一种分类算法，但是在训练期间，它会学习类之间最具辨别力的轴
+    # 然后可以使用这些轴来定义投影数据的超平面。好处是投影将使类与类尽可能远离，所以在运行另一种分类算法（如SVM分类器）之前
+    # ，LDA是一种降低维数的好方法
+    lda = LinearDiscriminantAnalysis(n_components=2)
+    X_mnist = mnist["data"]
+    y_mnist = mnist["target"]
+    lda.fit(X_mnist, y_mnist)
+    X_reduced_lda = lda.transform(X_mnist)
+
+    titles = ["MDS", "Isomap", "t-SNE"]
+    ##  画出 mds  isomap  t-sne 三种降维后的图像
+    plt.figure(figsize=(11, 4))
+    for subplot, title, X_reduced in zip((131, 132, 133), titles,
+                                         (X_reduced_mds, X_reduced_isomap, X_reduced_tsne)):
+        plt.subplot(subplot)
+        plt.title(title, fontsize=14)
+        plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
+        plt.xlabel("$z_1$", fontsize=18)
+        if subplot == 131:
+            plt.ylabel("$z_2$", fontsize=18, rotation=0)
+        plt.grid(True)
+
+    save_fig("other_dim_reduction_plot")
+    plt.show()
+
+
 
