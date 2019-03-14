@@ -11,7 +11,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 import tensorflow as tf
-from tensorflow_graph_in_jupyter import show_graph
+
+##from tensorflow_graph_in_jupyter import show_graph
 
 # to make this notebook's output stable across runs
 def reset_graph(seed=42):
@@ -38,42 +39,6 @@ def save_fig(fig_id, tight_layout=True):
         plt.tight_layout()
     plt.savefig(path, format='png', dpi=300)
 
-def my_func(a,b):
-    z=0
-    for i in range(100):
-        z = a * np.cos(z+i) + z * np.sin(b-i)
-    return z
-
-def fetch_batch(epoch, batch_index, batch_size):
-    np.random.seed(epoch * n_batches + batch_index)  # not shown in the book
-    indices = np.random.randint(m, size=batch_size)  # not shown
-    X_batch = scaled_housing_data_plus_bias[indices] # not shown
-    y_batch = housing.target.reshape(-1, 1)[indices] # not shown
-    return X_batch, y_batch
-
-def relu(X):
-    w_shape = (int(X.get_shape()[1]), 1)
-    w = tf.Variable(tf.random_normal(w_shape), name="weights")
-    b = tf.Variable(0.0, name="bias")
-    z = tf.add(tf.matmul(X, w), b, name="z")
-    return tf.maximum(z, 0., name="relu")
-
-def relu(X):
-    with tf.name_scope("relu"):
-        w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
-        w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-        b = tf.Variable(0.0, name="bias")  # not shown
-        z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-        return tf.maximum(z, 0., name="max")  # not shown
-
-
-def relu(X, threshold):
-    with tf.name_scope("relu"):
-        w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
-        w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-        b = tf.Variable(0.0, name="bias")  # not shown
-        z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-        return tf.maximum(z, threshold, name="max")
 
 
 if __name__ == '__main__':
@@ -216,6 +181,12 @@ if __name__ == '__main__':
 
 
 ##  using autodiff
+    def my_func(a, b):
+        z = 0
+        for i in range(100):
+            z = a * np.cos(z + i) + z * np.sin(b - i)
+        return z
+
     my_func(0.2, 0.3)
 
     reset_graph()
@@ -360,6 +331,14 @@ if __name__ == '__main__':
     batch_size = 100
     n_batches = int(np.ceil(m / batch_size))
 
+
+    def fetch_batch(epoch, batch_index, batch_size):
+        np.random.seed(epoch * n_batches + batch_index)  # not shown in the book
+        indices = np.random.randint(m, size=batch_size)  # not shown
+        X_batch = scaled_housing_data_plus_bias[indices]  # not shown
+        y_batch = housing.target.reshape(-1, 1)[indices]  # not shown
+        return X_batch, y_batch
+
     with tf.Session() as sess:
         sess.run(init)
 
@@ -425,7 +404,7 @@ if __name__ == '__main__':
     np.allclose(best_theta, best_theta_restored)
 
 ##  visualizing the graph and training curves using tensorboard
-    show_graph(tf.get_default_graph())
+    ##show_graph(tf.get_default_graph())
 
     reset_graph()
 
@@ -543,6 +522,14 @@ if __name__ == '__main__':
 
     reset_graph()
 
+
+    def relu(X):
+        w_shape = (int(X.get_shape()[1]), 1)
+        w = tf.Variable(tf.random_normal(w_shape), name="weights")
+        b = tf.Variable(0.0, name="bias")
+        z = tf.add(tf.matmul(X, w), b, name="z")
+        return tf.maximum(z, 0., name="relu")
+
     n_features = 3
     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
 
@@ -562,6 +549,13 @@ if __name__ == '__main__':
     reset_graph()
 
 
+    def relu(X):
+        with tf.name_scope("relu"):
+            w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, 0., name="max")  # not shown
 
     n_features = 3
     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
@@ -584,6 +578,15 @@ if __name__ == '__main__':
 ## sharing variables
     reset_graph()
 
+
+    def relu(X, threshold):
+        with tf.name_scope("relu"):
+            w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, threshold, name="max")
+
     threshold = tf.Variable(0.0, name="threshold")
     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
     relus = [relu(X, threshold) for i in range(5)]
@@ -592,6 +595,95 @@ if __name__ == '__main__':
 
     reset_graph()
 
+    def relu(X):
+        with tf.variable_scope("relu", reuse=True):
+            threshold = tf.get_variable("threshold")
+            w_shape = int(X.get_shape()[1]), 1  # not shown
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, threshold, name="max")
+
     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
     relus = [relu(X) for i in range(5)]
     output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu6", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+
+    def relu(X):
+        with tf.variable_scope("relu"):
+            threshold = tf.get_variable("threshold", shape=(), initializer=tf.constant_initializer(0.0))
+            w_shape = (int(X.get_shape()[1]), 1)
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")
+            b = tf.Variable(0.0, name="bias")
+            z = tf.add(tf.matmul(X, w), b, name="z")
+            return tf.maximum(z, threshold, name="max")
+
+
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    with tf.variable_scope("", default_name="") as scope:
+        first_relu = relu(X)  # create the shared variable
+        scope.reuse_variables()  # then reuse it
+        relus = [first_relu] + [relu(X) for i in range(4)]
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu8", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+
+    def relu(X):
+        threshold = tf.get_variable("threshold", shape=(),
+                                    initializer=tf.constant_initializer(0.0))
+        w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+        w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+        b = tf.Variable(0.0, name="bias")  # not shown
+        z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+        return tf.maximum(z, threshold, name="max")
+
+
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = []
+    for relu_index in range(5):
+        with tf.variable_scope("relu", reuse=(relu_index >= 1)) as scope:
+            relus.append(relu(X))
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu9", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+    with tf.variable_scope("my_scope"):
+        x0 = tf.get_variable("x", shape=(), initializer=tf.constant_initializer(0.))
+        x1 = tf.Variable(0., name="x")
+        x2 = tf.Variable(0., name="x")
+
+    with tf.variable_scope("my_scope", reuse=True):
+        x3 = tf.get_variable("x")
+        x4 = tf.Variable(0., name="x")
+
+    with tf.variable_scope("", default_name="", reuse=True):
+        x5 = tf.get_variable("my_scope/x")
+
+    print("x0:", x0.op.name)
+    print("x1:", x1.op.name)
+    print("x2:", x2.op.name)
+    print("x3:", x3.op.name)
+    print("x4:", x4.op.name)
+    print("x5:", x5.op.name)
+    print(x0 is x3 and x3 is x5)
+
+    ##  strings
+    reset_graph()
+
+    text = np.array("Do you want some café?".split())
+    text_tensor = tf.constant(text)
+
+    with tf.Session() as sess:
+        print(text_tensor.eval())
