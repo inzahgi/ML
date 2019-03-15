@@ -123,7 +123,7 @@ def plot_confusion_matrix(matrix):
 
 if __name__ == '__main__':
     ## 获取数据
-    mnist = fetch_mldata('MNIST original', data_home='./')
+    mnist = fetch_mldata('MNIST original', data_home='../')
     print("line = 127 mnist data: \n", mnist, "\n")
     ## 打印数据格式
     X, y = mnist["data"], mnist["target"]

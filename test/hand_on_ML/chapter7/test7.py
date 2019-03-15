@@ -235,7 +235,7 @@ if __name__ == '__main__':
     for name, score in zip(iris["feature_names"], rnd_clf.feature_importances_):
         print(name, score)
     ##  获取手写图像数字
-    mnist = fetch_mldata('MNIST original', data_home='../chapter3/')
+    mnist = fetch_mldata('MNIST original', data_home='../')
 
     rnd_clf = RandomForestClassifier(random_state=42)
     rnd_clf.fit(mnist["data"], mnist["target"])

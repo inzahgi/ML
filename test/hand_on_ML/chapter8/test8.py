@@ -389,7 +389,7 @@ if __name__ == '__main__':
     X_reduced = pca.fit_transform(X)
 
 
-    mnist = fetch_mldata('MNIST original', data_home='/home/inzahgi/test/jupyter/hand_on_ML/Hands-on-Machine-Learning/datasets')
+    mnist = fetch_mldata('MNIST original', data_home='../')
 
 
     X = mnist["data"]
@@ -555,7 +555,7 @@ if __name__ == '__main__':
     X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
 
     lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10)
-    X_reduced = lle.fit_transform(x)
+    X_reduced = lle.fit_transform(X)
 
     plt.title("Unrolled swiss roll using LLE", fontsize=14)
     plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=t, cmap=plt.cm.hot)
