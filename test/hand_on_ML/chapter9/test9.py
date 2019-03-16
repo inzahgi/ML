@@ -163,7 +163,7 @@ if __name__ == '__main__':
     reset_graph()
     n_epochs = 1000
     learning_rate = 0.01
-
+    ##  定义梯度下降计算图
     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     ##########################################################
     gradients = 2 / m * tf.matmul(tf.transpose(X), error)
     ##########################################################
-
+    ##  更新theta 的值
     training_op = tf.assign(theta, theta - learning_rate * gradients)
 
     init = tf.global_variables_initializer()
@@ -188,67 +188,64 @@ if __name__ == '__main__':
 
         best_theta = theta.eval()
 
+    print("line = 191 best_theta = {}".format(best_theta))
 
-    best_theta
+##  using autodiff  自动微分
+    def my_func(a, b):
+        z = 0
+        for i in range(100):
+            z = a * np.cos(z + i) + z * np.sin(b - i)
+        return z
 
+    print("line = 200 my_func(0.2, 0.3) = {}".format(my_func(0.2, 0.3)))
+##-----------------------
+    reset_graph()
+    ##  定义输入 输出
+    a = tf.Variable(0.2, name="a")
+    b = tf.Variable(0.3, name="b")
+    z = tf.constant(0.0, name="z0")
+    for i in range(100):
+        z = a * tf.cos(z + i) + z * tf.sin(b - i)
+    ##  求导
+    grads = tf.gradients(z, [a, b])
+    init = tf.global_variables_initializer()
 
+    with tf.Session() as sess:
+        init.run()
+        print("line = 215 z.eval() = {}".format(z.eval()))
+        print("line = 216 grads = {}".format(sess.run(grads)))
+##---------------------
+    reset_graph()
 
-# ##  using autodiff
-#     def my_func(a, b):
-#         z = 0
-#         for i in range(100):
-#             z = a * np.cos(z + i) + z * np.sin(b - i)
-#         return z
-#
-#     my_func(0.2, 0.3)
-#
-#     reset_graph()
-#
-#     a = tf.Variable(0.2, name="a")
-#     b = tf.Variable(0.3, name="b")
-#     z = tf.constant(0.0, name="z0")
-#     for i in range(100):
-#         z = a * tf.cos(z + i) + z * tf.sin(b - i)
-#
-#     grads = tf.gradients(z, [a, b])
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         print(z.eval())
-#         print(sess.run(grads))
-#
-#     reset_graph()
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
-#     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#
-#     gradients = tf.gradients(mse, [theta])[0]
-#
-#     training_op = tf.assign(theta, theta - learning_rate * gradients)
-#
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             if epoch % 100 == 0:
-#                 print("Epoch", epoch, "MSE =", mse.eval())
-#             sess.run(training_op)
-#
-#         best_theta = theta.eval()
-#
-#     print("Best theta:")
-#     print(best_theta)
-#
+    n_epochs = 1000
+    learning_rate = 0.01
+    ##  定义输入 输出
+    X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
+    y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    ## 计算梯度
+    gradients = tf.gradients(mse, [theta])[0]
+    ## 更新theta 的值
+    training_op = tf.assign(theta, theta - learning_rate * gradients)
+
+    init = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        sess.run(init)
+
+        for epoch in range(n_epochs):
+            if epoch % 100 == 0:
+                print("Epoch", epoch, "MSE =", mse.eval())
+            sess.run(training_op)
+
+        best_theta = theta.eval()
+
+    print("line = 246 Best theta:".format(best_theta))
+##------------------------------------
+
 #     reset_graph()
 #
 #     n_epochs = 1000
