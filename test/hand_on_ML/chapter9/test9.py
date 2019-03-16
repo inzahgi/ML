@@ -16,7 +16,7 @@ import tensorflow as tf
 
 # to make this notebook's output stable across runs
 def reset_graph(seed=42):
-    tf.reset_default_graph()
+    tf.reset_default_graph()  ## 清空默认图形堆栈并重置全局默认图形
     tf.set_random_seed(seed)
     np.random.seed(seed)
 
@@ -77,109 +77,122 @@ if __name__ == '__main__':
     result = f.eval()
     print("line = 78 result = {}".format(result))
     sess.close()
-    print("line = 81 result = {}".format(result))
+    print("line = 80 result = {}".format(result))
 ##-------------------------
 
 ##  managing graphs
     reset_graph()
-
+    ##  创建任何节点都会自动添加到默认图表中
     x1 = tf.Variable(1)
-    x1.graph is tf.get_default_graph()
-
+    print("line = 87 x1.graph is tf.get_default_graph() : {}".format(x1.graph is tf.get_default_graph()))
+##--------------
+    ##  当要管理多个图表时 通过创建一个新图表并暂时将其作为with内部的默认图表来完成
     graph = tf.Graph()
     with graph.as_default():
         x2 = tf.Variable(2)
-
-    x2.graph is graph
-
-    x2.graph is tf.get_default_graph()
-
+    ##  新建一个图表
+    print("line = 94 x2.graph is graph = {}".format(x2.graph is graph))
+##-----------------------
+    ##  x2新建图表 不是默认图表
+    print("line = 97 x2.graph is tf.get_default_graph() = {}".format(x2.graph is tf.get_default_graph()))
+##---------------------------
+##  节点的生命周期
     w = tf.constant(3)
     x = w + 2
     y = x + 5
     z = x * 3
-
+    ## 定义一个简单的图 y, z 通过多次计算 w x 动态获取 y z
     with tf.Session() as sess:
         y_val, z_val = sess.run([y, z])
-        print(y.eval())  # 10
-        print(z.eval())  # 15
-
+        print("line = 107 y.eval() = {}".format(y.eval()))  # 10
+        print("line = 108 z.eval() = {}".format(z.eval()))  # 15
+##-----------------------------
+    ##  在一次图表运算中获取 y z 的值
     with tf.Session() as sess:
         y_val, z_val = sess.run([y, z])
-        print(y_val)  # 10
-        print(z_val)  # 15
-
+        print("line = 113 y_val = {}".format(y_val))  # 10
+        print("line = 114 z_val = {}".format(z_val))  # 15
+##-----------------------------
     reset_graph()
-
+    ##  获取加州房屋数据
     housing = fetch_california_housing()
     m, n = housing.data.shape
+    ##  连接两个矩阵   np.c_   按行连接两个矩阵  即两矩阵左右相加   np.r_  按列连接两个矩阵  即把两矩阵上下相加
     housing_data_plus_bias = np.c_[np.ones((m, 1)), housing.data]
 
     X = tf.constant(housing_data_plus_bias, dtype=tf.float32, name="X")
     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
-    XT = tf.transpose(X)
+    XT = tf.transpose(X) ##  转置 X
+    ##  使用线性方程闭式解 求 theta
     theta = tf.matmul(tf.matmul(tf.matrix_inverse(tf.matmul(XT, X)), XT), y)
 
     with tf.Session() as sess:
         theta_value = theta.eval()
 
-    theta_value
-#
-#     ##  与纯numpy比较
-#     X = housing_data_plus_bias
-#     y = housing.target.reshape(-1, 1)
-#     theta_numpy = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
-#
-#     print(theta_numpy)
-#
-#     lin_reg = LinearRegression()
-#     lin_reg.fit(housing.data, housing.target.reshape(-1, 1))
-#
-#     print(np.r_[lin_reg.intercept_.reshape(-1, 1), lin_reg.coef_.T])
-#
-#     scaler = StandardScaler()
-#     scaled_housing_data = scaler.fit_transform(housing.data)
-#     scaled_housing_data_plus_bias = np.c_[np.ones((m, 1)), scaled_housing_data]
-#
-#     print(scaled_housing_data_plus_bias.mean(axis=0))
-#     print(scaled_housing_data_plus_bias.mean(axis=1))
-#     print(scaled_housing_data_plus_bias.mean())
-#     print(scaled_housing_data_plus_bias.shape)
-#
-#     reset_graph()
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
-#     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#     ##########################################################
-#     gradients = 2 / m * tf.matmul(tf.transpose(X), error)
-#     ##########################################################
-#
-#     training_op = tf.assign(theta, theta - learning_rate * gradients)
-#
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             if epoch % 100 == 0:  # 每100次迭代打印出当前的均方误差（mse）
-#                 print("Epoch", epoch, "MSE =", mse.eval())
-#             sess.run(training_op)
-#
-#         best_theta = theta.eval()
-#
-#
-#     best_theta
-#
-#
-#
+    print("line = 130 theta_value = {}".format(theta_value))
+##---------------------------
+    ##  与纯numpy比较
+    X = housing_data_plus_bias
+    y = housing.target.reshape(-1, 1)
+    theta_numpy = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
+
+    print("line = 139 theta_numpy = {}".format(theta_numpy))
+##---------------------------
+    lin_reg = LinearRegression()
+    lin_reg.fit(housing.data, housing.target.reshape(-1, 1))
+
+    print("line = 144 np.r_[lin_reg.intercept_.reshape(-1, 1), lin_reg.coef_.T] = {}"
+          .format(np.r_[lin_reg.intercept_.reshape(-1, 1), lin_reg.coef_.T]))
+##-----------------------------------
+##  实现梯度下降
+    ##  缩放特征向量
+    scaler = StandardScaler()
+    scaled_housing_data = scaler.fit_transform(housing.data)
+    scaled_housing_data_plus_bias = np.c_[np.ones((m, 1)), scaled_housing_data]  ## 组合特征
+
+    print("line = 153 scaled_housing_data_plus_bias.mean(axis=0) = {}"
+          .format(scaled_housing_data_plus_bias.mean(axis=0)))
+    print("line = 155 scaled_housing_data_plus_bias.mean(axis=1) {}"
+          .format(scaled_housing_data_plus_bias.mean(axis=1)))
+    print("line = 157 scaled_housing_data_plus_bias.mean() = {}"
+          .format(scaled_housing_data_plus_bias.mean()))
+    print("line = 159 scaled_housing_data_plus_bias.shape = {}"
+          .format(scaled_housing_data_plus_bias.shape))
+##--------------------------
+    ##  人工计算梯度下降
+    reset_graph()
+    n_epochs = 1000
+    learning_rate = 0.01
+
+    X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
+    y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    ##########################################################
+    gradients = 2 / m * tf.matmul(tf.transpose(X), error)
+    ##########################################################
+
+    training_op = tf.assign(theta, theta - learning_rate * gradients)
+
+    init = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        sess.run(init)
+
+        for epoch in range(n_epochs):
+            if epoch % 100 == 0:  # 每100次迭代打印出当前的均方误差（mse）
+                print("Epoch", epoch, "MSE =", mse.eval())
+            sess.run(training_op)
+
+        best_theta = theta.eval()
+
+
+    best_theta
+
+
+
 # ##  using autodiff
 #     def my_func(a, b):
 #         z = 0
