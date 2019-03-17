@@ -238,169 +238,170 @@ if __name__ == '__main__':
 
         for epoch in range(n_epochs):
             if epoch % 100 == 0:
-                print("Epoch", epoch, "MSE =", mse.eval())
+                print("line = 241 Epoch ", epoch, "MSE = ", mse.eval())
             sess.run(training_op)
 
         best_theta = theta.eval()
 
-    print("line = 246 Best theta:".format(best_theta))
+    print("line = 246 Best theta: {}".format(best_theta))
 ##------------------------------------
 
-#     reset_graph()
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
-#     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-#     training_op = optimizer.minimize(mse)
-#
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             if epoch % 100 == 0:
-#                 print("Epoch", epoch, "MSE =", mse.eval())
-#             sess.run(training_op)
-#
-#         best_theta = theta.eval()
-#
-#     print("Best theta:")
-#     print(best_theta)
-#
-#     reset_graph()
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
-#     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#
-#     optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
-#                                            momentum=0.9)
-#
-#     training_op = optimizer.minimize(mse)
-#
-#     init = tf.global_variables_initializer()
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             sess.run(training_op)
-#
-#         best_theta = theta.eval()
-#
-#     print("Best theta:")
-#     print(best_theta)
-#
-#
-# ##  feeding data to the algorithn
-#     reset_graph()
-#
-#     A = tf.placeholder(tf.float32, shape=(None, 3))
-#     B = A + 5
-#     with tf.Session() as sess:
-#         B_val_1 = B.eval(feed_dict={A: [[1, 2, 3]]})
-#         B_val_2 = B.eval(feed_dict={A: [[4, 5, 6], [7, 8, 9]]})
-#
-#     print(B_val_1)
-#     print(B_val_2)
-#
-#     ##  mini-batch gradient descent
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     reset_graph()
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
-#     y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
-#
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-#     training_op = optimizer.minimize(mse)
-#
-#     init = tf.global_variables_initializer()
-#
-#     n_epochs = 10
-#
-#     batch_size = 100
-#     n_batches = int(np.ceil(m / batch_size))
-#
-#
-#     def fetch_batch(epoch, batch_index, batch_size):
-#         np.random.seed(epoch * n_batches + batch_index)  # not shown in the book
-#         indices = np.random.randint(m, size=batch_size)  # not shown
-#         X_batch = scaled_housing_data_plus_bias[indices]  # not shown
-#         y_batch = housing.target.reshape(-1, 1)[indices]  # not shown
-#         return X_batch, y_batch
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             for batch_index in range(n_batches):
-#                 X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#
-#         best_theta = theta.eval()
-#
-#     best_theta
-#
-# ##  saving and restoring models
-#     reset_graph()
-#
-#     n_epochs = 1000  # not shown in the book
-#     learning_rate = 0.01  # not shown
-#
-#     X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")  # not shown
-#     y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")  # not shown
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")  # not shown
-#     error = y_pred - y  # not shown
-#     mse = tf.reduce_mean(tf.square(error), name="mse")  # not shown
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # not shown
-#     training_op = optimizer.minimize(mse)  # not shown
-#
-#     init = tf.global_variables_initializer()
-#     # 在构建阶段结束时创建一个Saver节点（在创建所有变量节点之后）
-#     saver = tf.train.Saver()
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             if epoch % 100 == 0:
-#                 print("Epoch", epoch, "MSE =", mse.eval())  # not shown
-#                 # 调用save() 方法
-#                 save_path = saver.save(sess, "/tmp/my_model.ckpt")
-#             sess.run(training_op)
-#
-#         best_theta = theta.eval()
-#         save_path = saver.save(sess, "/tmp/my_model_final.ckpt")
-#
-#     with tf.Session() as sess:
-#         saver.restore(sess, "/tmp/my_model_final.ckpt")
-#         best_theta_restored = theta.eval()  # not shown in the book
-#
-#     np.allclose(best_theta, best_theta_restored)
-#
-#     saver = tf.train.Saver({"weights": theta})
-#
+    reset_graph()
+
+    n_epochs = 1000
+    learning_rate = 0.01
+    ## 定义输入数据X和 目标数据y
+    X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
+    y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
+    ##  n housing data coloumn
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta") ## 定义斜率变量
+    y_pred = tf.matmul(X, theta, name="predictions")  ## 定义 预测值
+    ##  定义误差 和 均方差
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    ##  调用梯度下降方法 最小化mse
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    training_op = optimizer.minimize(mse)
+    ## 初始化所有变量
+    init = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        sess.run(init)
+        ## 迭代训练
+        for epoch in range(n_epochs):
+            ##  每100轮输出 mse  mse.eval()动态计算获取mse最新值
+            if epoch % 100 == 0:
+                print("line = 274 Epoch ", epoch, "MSE = ", mse.eval())
+            ## 最小化 mse
+            sess.run(training_op)
+        ##  获取 theta 的值
+        best_theta = theta.eval()
+
+    print("line = 280 Best theta: {}".format(best_theta))
+##-----------------------------------
+    ##  using an optimizer
+    reset_graph()
+
+    n_epochs = 1000
+    learning_rate = 0.01
+
+    X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")
+    y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    ## 使用自带优化器
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+                                           momentum=0.9)
+    training_op = optimizer.minimize(mse)
+
+    init = tf.global_variables_initializer()
+    with tf.Session() as sess:
+        sess.run(init)
+        for epoch in range(n_epochs):
+            sess.run(training_op)
+        best_theta = theta.eval()
+
+    print("line = 306 Best theta: {}".format(best_theta))
+##-----------------------------------
+##  feeding data to the algorithn
+    reset_graph()
+    ## 定义一个变量 占位符 A
+    A = tf.placeholder(tf.float32, shape=(None, 3))
+    B = A + 5
+    ##  动态传参数给A 计算B的值
+    with tf.Session() as sess:
+        B_val_1 = B.eval(feed_dict={A: [[1, 2, 3]]})
+        B_val_2 = B.eval(feed_dict={A: [[4, 5, 6], [7, 8, 9]]})
+
+    print("line = 318 B_val_1 = {}".format(B_val_1))
+    print("line = 319 V_val_2 = {}".format(B_val_2))
+##-----------------------
+    ##  mini-batch gradient descent
+    n_epochs = 1000
+    learning_rate = 0.01
+
+    reset_graph()
+    ##  定义X y 的变量 占位符
+    X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
+    y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
+    ## 定义梯度下降 关系图
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    training_op = optimizer.minimize(mse)
+
+    init = tf.global_variables_initializer()
+
+    n_epochs = 10
+
+    batch_size = 100
+    n_batches = int(np.ceil(m / batch_size))
+
+    ##  按批次获取缩放后的数据和目标值
+    def fetch_batch(epoch, batch_index, batch_size):
+        np.random.seed(epoch * n_batches + batch_index)  # not shown in the book
+        indices = np.random.randint(m, size=batch_size)  # not shown
+        X_batch = scaled_housing_data_plus_bias[indices]  # not shown
+        y_batch = housing.target.reshape(-1, 1)[indices]  # not shown
+        return X_batch, y_batch
+
+    with tf.Session() as sess:
+        sess.run(init)
+        ##  分轮次迭代
+        for epoch in range(n_epochs):
+            ## 按批次迭代
+            for batch_index in range(n_batches):
+                X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+
+        best_theta = theta.eval()
+
+    print("line = 363 best_theta = {}".format(best_theta))
+##----------------------------
+##  saving and restoring models
+    reset_graph()
+
+    n_epochs = 1000  # not shown in the book
+    learning_rate = 0.01  # not shown
+
+    X = tf.constant(scaled_housing_data_plus_bias, dtype=tf.float32, name="X")  # not shown
+    y = tf.constant(housing.target.reshape(-1, 1), dtype=tf.float32, name="y")  # not shown
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")  # not shown
+    error = y_pred - y  # not shown
+    mse = tf.reduce_mean(tf.square(error), name="mse")  # not shown
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)  # not shown
+    training_op = optimizer.minimize(mse)  # not shown
+
+    init = tf.global_variables_initializer()
+    # 在构建阶段结束时创建一个Saver节点（在创建所有变量节点之后）
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        sess.run(init)
+
+        for epoch in range(n_epochs):
+            if epoch % 100 == 0:
+                print("Epoch", epoch, "MSE =", mse.eval())  # not shown
+                # 调用save() 方法
+                save_path = saver.save(sess, "/tmp/my_model.ckpt")
+            sess.run(training_op)
+
+        best_theta = theta.eval()
+        save_path = saver.save(sess, "/tmp/my_model_final.ckpt")
+
+    with tf.Session() as sess:
+        saver.restore(sess, "/tmp/my_model_final.ckpt")
+        best_theta_restored = theta.eval()  # not shown in the book
+
+    np.allclose(best_theta, best_theta_restored)
+
+    saver = tf.train.Saver({"weights": theta})
+
 #     reset_graph()
 #     # notice that we start with an empty graph.
 #
