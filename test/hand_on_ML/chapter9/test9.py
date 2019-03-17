@@ -387,134 +387,136 @@ if __name__ == '__main__':
         for epoch in range(n_epochs):
             if epoch % 100 == 0:
                 print("Epoch", epoch, "MSE =", mse.eval())  # not shown
-                # 调用save() 方法
+                # 调用save() 方法 保存中间训练结果
                 save_path = saver.save(sess, "/tmp/my_model.ckpt")
             sess.run(training_op)
 
         best_theta = theta.eval()
+        ## 保存训练结果
         save_path = saver.save(sess, "/tmp/my_model_final.ckpt")
-
+    ## 恢复模型参数
     with tf.Session() as sess:
         saver.restore(sess, "/tmp/my_model_final.ckpt")
         best_theta_restored = theta.eval()  # not shown in the book
 
+    print("line = 402 np.allclose(best_theta, best_theta_restored = {}")\
+        .format(np.allclose(best_theta, best_theta_restored))
+    ## 仅保存或者恢复 名称为 weights 的 theta变量
+    saver = tf.train.Saver({"weights": theta})
+##------------------------
+    reset_graph()
+    # notice that we start with an empty graph.
+
+    saver = tf.train.import_meta_graph("/tmp/my_model_final.ckpt.meta")  # this loads the graph structure
+    theta = tf.get_default_graph().get_tensor_by_name("theta:0")  # not shown in the book
+
+    with tf.Session() as sess:
+        saver.restore(sess, "/tmp/my_model_final.ckpt")  # this restores the graph's state
+        best_theta_restored = theta.eval()  # not shown in the book
+
     np.allclose(best_theta, best_theta_restored)
 
-    saver = tf.train.Saver({"weights": theta})
+##  visualizing the graph and training curves using tensorboard
+    ##show_graph(tf.get_default_graph())
 
-#     reset_graph()
-#     # notice that we start with an empty graph.
-#
-#     saver = tf.train.import_meta_graph("/tmp/my_model_final.ckpt.meta")  # this loads the graph structure
-#     theta = tf.get_default_graph().get_tensor_by_name("theta:0")  # not shown in the book
-#
-#     with tf.Session() as sess:
-#         saver.restore(sess, "/tmp/my_model_final.ckpt")  # this restores the graph's state
-#         best_theta_restored = theta.eval()  # not shown in the book
-#
-#     np.allclose(best_theta, best_theta_restored)
-#
-# ##  visualizing the graph and training curves using tensorboard
-#     ##show_graph(tf.get_default_graph())
-#
-#     reset_graph()
-#
-#
-#
-#     now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-#     root_logdir = "tf_logs"
-#     logdir = "{}/run-{}/".format(root_logdir, now)
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
-#     y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#     error = y_pred - y
-#     mse = tf.reduce_mean(tf.square(error), name="mse")
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-#     training_op = optimizer.minimize(mse)
-#
-#     init = tf.global_variables_initializer()
-#
-#     mse_summary = tf.summary.scalar('MSE', mse)
-#     file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
-#
-#     n_epochs = 10
-#     batch_size = 100
-#     n_batches = int(np.ceil(m / batch_size))
-#
-#     with tf.Session() as sess:  # not shown in the book
-#         sess.run(init)  # not shown
-#
-#         for epoch in range(n_epochs):  # not shown
-#             for batch_index in range(n_batches):
-#                 X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
-#                 if batch_index % 10 == 0:
-#                     summary_str = mse_summary.eval(feed_dict={X: X_batch, y: y_batch})
-#                     step = epoch * n_batches + batch_index
-#                     file_writer.add_summary(summary_str, step)
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#
-#         best_theta = theta.eval()  # not shown
-#
-#     file_writer.close()
-#
-#     reset_graph()
-#
-#     now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-#     root_logdir = "tf_logs"
-#     logdir = "{}/run-{}/".format(root_logdir, now)
-#
-#     n_epochs = 1000
-#     learning_rate = 0.01
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
-#     y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
-#     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
-#     y_pred = tf.matmul(X, theta, name="predictions")
-#
-#     with tf.name_scope("loss") as scope:
-#         error = y_pred - y
-#         mse = tf.reduce_mean(tf.square(error), name="mse")
-#
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-#     training_op = optimizer.minimize(mse)
-#
-#     init = tf.global_variables_initializer()
-#
-#     mse_summary = tf.summary.scalar('MSE', mse)
-#     file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
-#
-#     n_epochs = 10
-#     batch_size = 100
-#     n_batches = int(np.ceil(m / batch_size))
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#
-#         for epoch in range(n_epochs):
-#             for batch_index in range(n_batches):
-#                 X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
-#                 if batch_index % 10 == 0:
-#                     summary_str = mse_summary.eval(feed_dict={X: X_batch, y: y_batch})
-#                     step = epoch * n_batches + batch_index
-#                     file_writer.add_summary(summary_str, step)
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#
-#         best_theta = theta.eval()
-#
-#     file_writer.flush()
-#     file_writer.close()
-#     print("Best theta:")
-#     print(best_theta)
-#
-#     print(error.op.name)
-#
-#     print(mse.op.name)
-#
+    reset_graph()
+
+
+
+    now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    root_logdir = "tf_logs"
+    logdir = "{}/run-{}/".format(root_logdir, now)
+
+    n_epochs = 1000
+    learning_rate = 0.01
+
+    X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
+    y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+    error = y_pred - y
+    mse = tf.reduce_mean(tf.square(error), name="mse")
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    training_op = optimizer.minimize(mse)
+
+    init = tf.global_variables_initializer()
+
+    mse_summary = tf.summary.scalar('MSE', mse)
+    file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
+
+    n_epochs = 10
+    batch_size = 100
+    n_batches = int(np.ceil(m / batch_size))
+
+    with tf.Session() as sess:  # not shown in the book
+        sess.run(init)  # not shown
+
+        for epoch in range(n_epochs):  # not shown
+            for batch_index in range(n_batches):
+                X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
+                if batch_index % 10 == 0:
+                    summary_str = mse_summary.eval(feed_dict={X: X_batch, y: y_batch})
+                    step = epoch * n_batches + batch_index
+                    file_writer.add_summary(summary_str, step)
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+
+        best_theta = theta.eval()  # not shown
+
+    file_writer.close()
+
+    reset_graph()
+
+    now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    root_logdir = "tf_logs"
+    logdir = "{}/run-{}/".format(root_logdir, now)
+
+    n_epochs = 1000
+    learning_rate = 0.01
+
+    X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
+    y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
+    theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
+    y_pred = tf.matmul(X, theta, name="predictions")
+
+    with tf.name_scope("loss") as scope:
+        error = y_pred - y
+        mse = tf.reduce_mean(tf.square(error), name="mse")
+
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    training_op = optimizer.minimize(mse)
+
+    init = tf.global_variables_initializer()
+
+    mse_summary = tf.summary.scalar('MSE', mse)
+    file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
+
+    n_epochs = 10
+    batch_size = 100
+    n_batches = int(np.ceil(m / batch_size))
+
+    with tf.Session() as sess:
+        sess.run(init)
+
+        for epoch in range(n_epochs):
+            for batch_index in range(n_batches):
+                X_batch, y_batch = fetch_batch(epoch, batch_index, batch_size)
+                if batch_index % 10 == 0:
+                    summary_str = mse_summary.eval(feed_dict={X: X_batch, y: y_batch})
+                    step = epoch * n_batches + batch_index
+                    file_writer.add_summary(summary_str, step)
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+
+        best_theta = theta.eval()
+
+    file_writer.flush()
+    file_writer.close()
+    print("Best theta:")
+    print(best_theta)
+
+    print(error.op.name)
+
+    print(mse.op.name)
+
 #     reset_graph()
 #
 #     a1 = tf.Variable(0, name="a")  # name == "a"
