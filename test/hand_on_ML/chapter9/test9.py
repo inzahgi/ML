@@ -420,16 +420,14 @@ if __name__ == '__main__':
     ##show_graph(tf.get_default_graph())
 
     reset_graph()
-
-
-
+    ## 设置日志地址
     now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     root_logdir = "tf_logs"
     logdir = "{}/run-{}/".format(root_logdir, now)
 
     n_epochs = 1000
     learning_rate = 0.01
-
+    ## 构造计算图
     X = tf.placeholder(tf.float32, shape=(None, n + 1), name="X")
     y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
@@ -442,6 +440,7 @@ if __name__ == '__main__':
     init = tf.global_variables_initializer()
 
     mse_summary = tf.summary.scalar('MSE', mse)
+    ##  定义记录日志的 filewriter
     file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
 
     n_epochs = 10
@@ -457,13 +456,13 @@ if __name__ == '__main__':
                 if batch_index % 10 == 0:
                     summary_str = mse_summary.eval(feed_dict={X: X_batch, y: y_batch})
                     step = epoch * n_batches + batch_index
-                    file_writer.add_summary(summary_str, step)
+                    file_writer.add_summary(summary_str, step) ## 记录中间训练mse 以及步数
                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
 
         best_theta = theta.eval()  # not shown
 
     file_writer.close()
-
+##-------------------------------
     reset_graph()
 
     now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -477,7 +476,7 @@ if __name__ == '__main__':
     y = tf.placeholder(tf.float32, shape=(None, 1), name="y")
     theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="theta")
     y_pred = tf.matmul(X, theta, name="predictions")
-
+    ## 新增域名作用域 loss
     with tf.name_scope("loss") as scope:
         error = y_pred - y
         mse = tf.reduce_mean(tf.square(error), name="mse")
@@ -489,11 +488,11 @@ if __name__ == '__main__':
 
     mse_summary = tf.summary.scalar('MSE', mse)
     file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
-
+##--------------------------
     n_epochs = 10
     batch_size = 100
     n_batches = int(np.ceil(m / batch_size))
-
+    ## 分批次 训练数据 记录日志
     with tf.Session() as sess:
         sess.run(init)
 
@@ -510,13 +509,10 @@ if __name__ == '__main__':
 
     file_writer.flush()
     file_writer.close()
-    print("Best theta:")
-    print(best_theta)
-
-    print(error.op.name)
-
-    print(mse.op.name)
-
+    print("line = 512 Best theta: {}".format(best_theta))
+    print("line = 513 error.op.name = {}".format(error.op.name))
+    print("line = 514 mse.op.name = {}".format(mse.op.name))
+##----------------------------------------
 #     reset_graph()
 #
 #     a1 = tf.Variable(0, name="a")  # name == "a"
