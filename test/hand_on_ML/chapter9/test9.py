@@ -513,186 +513,184 @@ if __name__ == '__main__':
     print("line = 513 error.op.name = {}".format(error.op.name))
     print("line = 514 mse.op.name = {}".format(mse.op.name))
 ##----------------------------------------
-#     reset_graph()
-#
-#     a1 = tf.Variable(0, name="a")  # name == "a"
-#     a2 = tf.Variable(0, name="a")  # name == "a_1"
-#
-#     with tf.name_scope("param"):  # name == "param"
-#         a3 = tf.Variable(0, name="a")  # name == "param/a"
-#
-#     with tf.name_scope("param"):  # name == "param_1"
-#         a4 = tf.Variable(0, name="a")  # name == "param_1/a"
-#
-#     for node in (a1, a2, a3, a4):
-#         print(node.op.name)
-#
-# ## modularity
-#
-#     reset_graph()
-#
-#
-#     def relu(X):
-#         w_shape = (int(X.get_shape()[1]), 1)
-#         w = tf.Variable(tf.random_normal(w_shape), name="weights")
-#         b = tf.Variable(0.0, name="bias")
-#         z = tf.add(tf.matmul(X, w), b, name="z")
-#         return tf.maximum(z, 0., name="relu")
-#
-#     n_features = 3
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#
-#     w1 = tf.Variable(tf.random_normal((n_features, 1)), name="weights1")
-#     w2 = tf.Variable(tf.random_normal((n_features, 1)), name="weights2")
-#     b1 = tf.Variable(0.0, name="bias1")
-#     b2 = tf.Variable(0.0, name="bias2")
-#
-#     z1 = tf.add(tf.matmul(X, w1), b1, name="z1")
-#     z2 = tf.add(tf.matmul(X, w2), b2, name="z2")
-#
-#     relu1 = tf.maximum(z1, 0., name="relu1")
-#     relu2 = tf.maximum(z1, 0., name="relu2")  # Oops, cut&paste error! Did you spot it?
-#
-#     output = tf.add(relu1, relu2, name="output")
-#
-#     reset_graph()
-#
-#
-#     def relu(X):
-#         with tf.name_scope("relu"):
-#             w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
-#             w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-#             b = tf.Variable(0.0, name="bias")  # not shown
-#             z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-#             return tf.maximum(z, 0., name="max")  # not shown
-#
-#     n_features = 3
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     relus = [relu(X) for i in range(5)]
-#     output = tf.add_n(relus, name="output")
-#
-#     file_writer = tf.summary.FileWriter("logs/relu1", tf.get_default_graph())
-#
-#     reset_graph()
-#
-#     n_features = 3
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     relus = [relu(X) for i in range(5)]
-#     output = tf.add_n(relus, name="output")
-#
-#     file_writer = tf.summary.FileWriter("logs/relu2", tf.get_default_graph())
-#     file_writer.close()
-#
-#
-# ## sharing variables
-#     reset_graph()
-#
-#
-#     def relu(X, threshold):
-#         with tf.name_scope("relu"):
-#             w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
-#             w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-#             b = tf.Variable(0.0, name="bias")  # not shown
-#             z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-#             return tf.maximum(z, threshold, name="max")
-#
-#     threshold = tf.Variable(0.0, name="threshold")
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     relus = [relu(X, threshold) for i in range(5)]
-#     output = tf.add_n(relus, name="output")
-#
-#
-#     reset_graph()
-#
-#     def relu(X):
-#         with tf.variable_scope("relu", reuse=True):
-#             threshold = tf.get_variable("threshold")
-#             w_shape = int(X.get_shape()[1]), 1  # not shown
-#             w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-#             b = tf.Variable(0.0, name="bias")  # not shown
-#             z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-#             return tf.maximum(z, threshold, name="max")
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     relus = [relu(X) for i in range(5)]
-#     output = tf.add_n(relus, name="output")
-#
-#     file_writer = tf.summary.FileWriter("logs/relu6", tf.get_default_graph())
-#     file_writer.close()
-#
-#     reset_graph()
-#
-#
-#     def relu(X):
-#         with tf.variable_scope("relu"):
-#             threshold = tf.get_variable("threshold", shape=(), initializer=tf.constant_initializer(0.0))
-#             w_shape = (int(X.get_shape()[1]), 1)
-#             w = tf.Variable(tf.random_normal(w_shape), name="weights")
-#             b = tf.Variable(0.0, name="bias")
-#             z = tf.add(tf.matmul(X, w), b, name="z")
-#             return tf.maximum(z, threshold, name="max")
-#
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     with tf.variable_scope("", default_name="") as scope:
-#         first_relu = relu(X)  # create the shared variable
-#         scope.reuse_variables()  # then reuse it
-#         relus = [first_relu] + [relu(X) for i in range(4)]
-#     output = tf.add_n(relus, name="output")
-#
-#     file_writer = tf.summary.FileWriter("logs/relu8", tf.get_default_graph())
-#     file_writer.close()
-#
-#     reset_graph()
-#
-#
-#     def relu(X):
-#         threshold = tf.get_variable("threshold", shape=(),
-#                                     initializer=tf.constant_initializer(0.0))
-#         w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
-#         w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
-#         b = tf.Variable(0.0, name="bias")  # not shown
-#         z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
-#         return tf.maximum(z, threshold, name="max")
-#
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
-#     relus = []
-#     for relu_index in range(5):
-#         with tf.variable_scope("relu", reuse=(relu_index >= 1)) as scope:
-#             relus.append(relu(X))
-#     output = tf.add_n(relus, name="output")
-#
-#     file_writer = tf.summary.FileWriter("logs/relu9", tf.get_default_graph())
-#     file_writer.close()
-#
-#     reset_graph()
-#
-#     with tf.variable_scope("my_scope"):
-#         x0 = tf.get_variable("x", shape=(), initializer=tf.constant_initializer(0.))
-#         x1 = tf.Variable(0., name="x")
-#         x2 = tf.Variable(0., name="x")
-#
-#     with tf.variable_scope("my_scope", reuse=True):
-#         x3 = tf.get_variable("x")
-#         x4 = tf.Variable(0., name="x")
-#
-#     with tf.variable_scope("", default_name="", reuse=True):
-#         x5 = tf.get_variable("my_scope/x")
-#
-#     print("x0:", x0.op.name)
-#     print("x1:", x1.op.name)
-#     print("x2:", x2.op.name)
-#     print("x3:", x3.op.name)
-#     print("x4:", x4.op.name)
-#     print("x5:", x5.op.name)
-#     print(x0 is x3 and x3 is x5)
-#
-#     ##  strings
-#     reset_graph()
-#
-#     text = np.array("Do you want some café?".split())
-#     text_tensor = tf.constant(text)
-#
-#     with tf.Session() as sess:
-#         print(text_tensor.eval())
+    reset_graph()
+    ##  同名参数 自动加前缀
+    a1 = tf.Variable(0, name="a")  # name == "a"
+    a2 = tf.Variable(0, name="a")  # name == "a_1"
+    ##  分阶段 打开 session  也会影响作用域名称
+    with tf.name_scope("param"):  # name == "param"
+        a3 = tf.Variable(0, name="a")  # name == "param/a"
+
+    with tf.name_scope("param"):  # name == "param_1"
+        a4 = tf.Variable(0, name="a")  # name == "param_1/a"
+
+    for node in (a1, a2, a3, a4):
+        print(node.op.name)
+
+## modularity
+
+    reset_graph()
+    ## 定义激活函数 relu
+    def relu(X):
+        w_shape = (int(X.get_shape()[1]), 1)
+        w = tf.Variable(tf.random_normal(w_shape), name="weights")
+        b = tf.Variable(0.0, name="bias")
+        z = tf.add(tf.matmul(X, w), b, name="z")
+        return tf.maximum(z, 0., name="relu")
+    ##  定义两个 神经元 通过 relu 相加后的 计算图
+    n_features = 3
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+
+    w1 = tf.Variable(tf.random_normal((n_features, 1)), name="weights1")
+    w2 = tf.Variable(tf.random_normal((n_features, 1)), name="weights2")
+    b1 = tf.Variable(0.0, name="bias1")
+    b2 = tf.Variable(0.0, name="bias2")
+
+    z1 = tf.add(tf.matmul(X, w1), b1, name="z1")
+    z2 = tf.add(tf.matmul(X, w2), b2, name="z2")
+
+    relu1 = tf.maximum(z1, 0., name="relu1")
+    relu2 = tf.maximum(z1, 0., name="relu2")  # Oops, cut&paste error! Did you spot it?
+
+    output = tf.add(relu1, relu2, name="output")
+
+    reset_graph()
+
+    ## 重新定义relu 返回 name 不一样
+    def relu(X):
+        with tf.name_scope("relu"):
+            w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, 0., name="max")  # not shown
+    ## 循环中复用 relu
+    n_features = 3
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = [relu(X) for i in range(5)]
+    output = tf.add_n(relus, name="output")
+    ##  保存训练的中间情况
+    file_writer = tf.summary.FileWriter("logs/relu1", tf.get_default_graph())
+
+    reset_graph()
+    ##  ???
+    n_features = 3
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = [relu(X) for i in range(5)]
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu2", tf.get_default_graph())
+    file_writer.close()
+
+
+## sharing variables
+    reset_graph()
+
+    def relu(X, threshold):
+        with tf.name_scope("relu"):
+            w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, threshold, name="max")
+
+    threshold = tf.Variable(0.0, name="threshold")
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = [relu(X, threshold) for i in range(5)]
+    output = tf.add_n(relus, name="output")
+
+
+    reset_graph()
+    ##  打开session 时 复用 relu
+    def relu(X):
+        with tf.variable_scope("relu", reuse=True):
+            threshold = tf.get_variable("threshold")
+            w_shape = int(X.get_shape()[1]), 1  # not shown
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+            b = tf.Variable(0.0, name="bias")  # not shown
+            z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+            return tf.maximum(z, threshold, name="max")
+
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = [relu(X) for i in range(5)]
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu6", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+    ##  通过 get_variable  没有的话 直接初始化
+    def relu(X):
+        with tf.variable_scope("relu"):
+            threshold = tf.get_variable("threshold", shape=(), initializer=tf.constant_initializer(0.0))
+            w_shape = (int(X.get_shape()[1]), 1)
+            w = tf.Variable(tf.random_normal(w_shape), name="weights")
+            b = tf.Variable(0.0, name="bias")
+            z = tf.add(tf.matmul(X, w), b, name="z")
+            return tf.maximum(z, threshold, name="max")
+
+
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    with tf.variable_scope("", default_name="") as scope:
+        first_relu = relu(X)  # create the shared variable
+        scope.reuse_variables()  # then reuse it
+        relus = [first_relu] + [relu(X) for i in range(4)]
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu8", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+    ## 没有额外打开 session 获取 threshold
+    def relu(X):
+        threshold = tf.get_variable("threshold", shape=(),
+                                    initializer=tf.constant_initializer(0.0))
+        w_shape = (int(X.get_shape()[1]), 1)  # not shown in the book
+        w = tf.Variable(tf.random_normal(w_shape), name="weights")  # not shown
+        b = tf.Variable(0.0, name="bias")  # not shown
+        z = tf.add(tf.matmul(X, w), b, name="z")  # not shown
+        return tf.maximum(z, threshold, name="max")
+
+
+    X = tf.placeholder(tf.float32, shape=(None, n_features), name="X")
+    relus = []
+    for relu_index in range(5):
+        with tf.variable_scope("relu", reuse=(relu_index >= 1)) as scope:
+            relus.append(relu(X))
+    output = tf.add_n(relus, name="output")
+
+    file_writer = tf.summary.FileWriter("logs/relu9", tf.get_default_graph())
+    file_writer.close()
+
+    reset_graph()
+
+    with tf.variable_scope("my_scope"):
+        x0 = tf.get_variable("x", shape=(), initializer=tf.constant_initializer(0.))
+        x1 = tf.Variable(0., name="x")
+        x2 = tf.Variable(0., name="x")
+
+    with tf.variable_scope("my_scope", reuse=True):
+        x3 = tf.get_variable("x")
+        x4 = tf.Variable(0., name="x")
+
+    with tf.variable_scope("", default_name="", reuse=True):
+        x5 = tf.get_variable("my_scope/x")
+
+    print("x0:", x0.op.name)
+    print("x1:", x1.op.name)
+    print("x2:", x2.op.name)
+    print("x3:", x3.op.name)
+    print("x4:", x4.op.name)
+    print("x5:", x5.op.name)
+    print(x0 is x3 and x3 is x5)
+
+    ##  strings
+    reset_graph()
+
+    text = np.array("Do you want some café?".split())
+    text_tensor = tf.constant(text)
+
+    with tf.Session() as sess:
+        print(text_tensor.eval())
