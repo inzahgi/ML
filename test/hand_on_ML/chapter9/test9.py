@@ -29,7 +29,7 @@ plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
 
 # Where to save the figures
-PROJECT_ROOT_DIR = "/home/inzahgi/test/jupyter/hand_on_ML/Hands-on-Machine-Learning"
+PROJECT_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 CHAPTER_ID = "09_Up and Running with TensorFlow"
 
 def save_fig(fig_id, tight_layout=True):
