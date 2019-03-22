@@ -894,5 +894,10 @@ def selu(z,
 
 
 ##  faster optimizers
+    ## 在TensorFlow中实现动量优化是一个明智的选择：只需用MomentumOptimizer替换GradientDescentOptimizer，
+    ##  Momentum优化的一个缺点是它增加了另一个需要调整的超参数。 然而，0.9的动量值通常在实践中运作良好，并且几乎总是比梯度下降更快。
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+                                           momentum=0.9)
 
-    
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+                                           momentum=0.9, use_nesterov=True)
