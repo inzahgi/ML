@@ -160,3 +160,173 @@ if __name__ == '__main__':
             print("No more training instances")
 
 ##Queue runners and coordinators
+    reset_graph()
+
+    filename_queue = tf.FIFOQueue(capacity=10, dtypes=[tf.string], shapes=[()])
+    filename = tf.placeholder(tf.string)
+    enqueue_filename = filename_queue.enqueue([filename])
+    close_filename_queue = filename_queue.close()
+
+    reader = tf.TextLineReader(skip_header_lines=1)
+    key, value = reader.read(filename_queue)
+
+    x1, x2, target = tf.decode_csv(value, record_defaults=[[-1.], [-1.], [-1]])
+    features = tf.stack([x1, x2])
+
+    instance_queue = tf.RandomShuffleQueue(
+        capacity=10, min_after_dequeue=2,
+        dtypes=[tf.float32, tf.int32], shapes=[[2], []],
+        name="instance_q", shared_name="shared_instance_q")
+    enqueue_instance = instance_queue.enqueue([features, target])
+    close_instance_queue = instance_queue.close()
+
+    minibatch_instances, minibatch_targets = instance_queue.dequeue_up_to(2)
+
+    n_threads = 5
+    queue_runner = tf.train.QueueRunner(instance_queue, [enqueue_instance] * n_threads)
+    coord = tf.train.Coordinator()
+
+    with tf.Session() as sess:
+        sess.run(enqueue_filename, feed_dict={filename: "my_test.csv"})
+        sess.run(close_filename_queue)
+        enqueue_threads = queue_runner.create_threads(sess, coord=coord, start=True)
+        try:
+            while True:
+                print(sess.run([minibatch_instances, minibatch_targets]))
+        except tf.errors.OutOfRangeError as ex:
+            print("No more training instances")
+
+
+    reset_graph()
+
+
+    def read_and_push_instance(filename_queue, instance_queue):
+        reader = tf.TextLineReader(skip_header_lines=1)
+        key, value = reader.read(filename_queue)
+        x1, x2, target = tf.decode_csv(value, record_defaults=[[-1.], [-1.], [-1]])
+        features = tf.stack([x1, x2])
+        enqueue_instance = instance_queue.enqueue([features, target])
+        return enqueue_instance
+
+
+    filename_queue = tf.FIFOQueue(capacity=10, dtypes=[tf.string], shapes=[()])
+    filename = tf.placeholder(tf.string)
+    enqueue_filename = filename_queue.enqueue([filename])
+    close_filename_queue = filename_queue.close()
+
+    instance_queue = tf.RandomShuffleQueue(
+        capacity=10, min_after_dequeue=2,
+        dtypes=[tf.float32, tf.int32], shapes=[[2], []],
+        name="instance_q", shared_name="shared_instance_q")
+
+    minibatch_instances, minibatch_targets = instance_queue.dequeue_up_to(2)
+
+    read_and_enqueue_ops = [read_and_push_instance(filename_queue, instance_queue) for i in range(5)]
+    queue_runner = tf.train.QueueRunner(instance_queue, read_and_enqueue_ops)
+
+    with tf.Session() as sess:
+        sess.run(enqueue_filename, feed_dict={filename: "my_test.csv"})
+        sess.run(close_filename_queue)
+        coord = tf.train.Coordinator()
+        enqueue_threads = queue_runner.create_threads(sess, coord=coord, start=True)
+        try:
+            while True:
+                print(sess.run([minibatch_instances, minibatch_targets]))
+        except tf.errors.OutOfRangeError as ex:
+            print("No more training instances")
+
+## setting a timeout
+
+    reset_graph()
+
+    q = tf.FIFOQueue(capacity=10, dtypes=[tf.float32], shapes=[()])
+    v = tf.placeholder(tf.float32)
+    enqueue = q.enqueue([v])
+    dequeue = q.dequeue()
+    output = dequeue + 1
+
+    config = tf.ConfigProto()
+    config.operation_timeout_in_ms = 1000
+
+    with tf.Session(config=config) as sess:
+        sess.run(enqueue, feed_dict={v: 1.0})
+        sess.run(enqueue, feed_dict={v: 2.0})
+        sess.run(enqueue, feed_dict={v: 3.0})
+        print(sess.run(output))
+        print(sess.run(output, feed_dict={dequeue: 5}))
+        print(sess.run(output))
+        print(sess.run(output))
+        try:
+            print(sess.run(output))
+        except tf.errors.DeadlineExceededError as ex:
+            print("Timed out while dequeuing")
+
+
+## data api
+    tf.reset_default_graph()
+
+    dataset = tf.data.Dataset.from_tensor_slices(np.arange(10))
+    dataset = dataset.repeat(3).batch(7)
+
+    iterator = dataset.make_one_shot_iterator()
+    next_element = iterator.get_next()
+
+
+    with tf.Session() as sess:
+        try:
+            while True:
+                print(next_element.eval())
+        except tf.errors.OutOfRangeError:
+            print("Done")
+
+    with tf.Session() as sess:
+        try:
+            while True:
+                print(sess.run([next_element, next_element]))
+        except tf.errors.OutOfRangeError:
+            print("Done")
+
+
+    tf.reset_default_graph()
+
+    dataset = tf.data.Dataset.from_tensor_slices(np.arange(10))
+    dataset = dataset.repeat(3).batch(7)
+    dataset = dataset.interleave(
+        lambda v: tf.data.Dataset.from_tensor_slices(v),
+        cycle_length=3,
+        block_length=2)
+    iterator = dataset.make_one_shot_iterator()
+    next_element = iterator.get_next()
+
+
+    with tf.Session() as sess:
+        try:
+            while True:
+                print(next_element.eval(), end=",")
+        except tf.errors.OutOfRangeError:
+            print("Done")
+
+    tf.reset_default_graph()
+
+    filenames = ["my_test.csv"]
+
+    dataset = tf.data.TextLineDataset(filenames)
+
+    def decode_csv_line(line):
+        x1, x2, y = tf.decode_csv(
+            line, record_defaults=[[-1.], [-1.], [-1.]])
+        X = tf.stack([x1, x2])
+        return X, y
+
+    dataset = dataset.skip(1).map(decode_csv_line)
+
+    it = dataset.make_one_shot_iterator()
+    X, y = it.get_next()
+
+    with tf.Session() as sess:
+        try:
+            while True:
+                X_val, y_val = sess.run([X, y])
+                print(X_val, y_val)
+        except tf.errors.OutOfRangeError as ex:
+            print("Done")
