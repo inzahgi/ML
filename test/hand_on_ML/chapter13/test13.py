@@ -60,3 +60,26 @@ if __name__ == '__main__':
     plt.show()
     plot_image(fmap[:, :, 0, 1])
     plt.show()
+
+    reset_graph()
+
+    X = tf.placeholder(tf.float32, shape=(None, height, width, 1))
+    feature_maps = tf.constant(fmap)
+    convolution = tf.nn.conv2d(X, feature_maps, strides=[1, 1, 1, 1], padding="SAME")
+
+    with tf.Session() as sess:
+        output = convolution.eval(feed_dict={X: images})
+
+    plot_image(images[0, :, :, 0])
+    save_fig("china_original", tight_layout=False)
+    plt.show()
+
+    plot_image(output[0, :, :, 0])
+    save_fig("china_vertical", tight_layout=False)
+    plt.show()
+
+    plot_image(output[0, :, :, 1])
+    save_fig("china_horizontal", tight_layout=False)
+    plt.show()
+
+## Stacking Multiple Feature Maps
