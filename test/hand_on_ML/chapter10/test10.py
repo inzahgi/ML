@@ -152,14 +152,14 @@ if __name__ == '__main__':
     z2 = mlp_xor(x1, x2, activation=sigmoid)
 
     plt.figure(figsize=(10, 4))
-
+    ##  heaviside激活函数
     plt.subplot(121)
     plt.contourf(x1, x2, z1)
     plt.plot([0, 1], [0, 1], "gs", markersize=20)
     plt.plot([0, 1], [1, 0], "y^", markersize=20)
     plt.title("Activation function: heaviside", fontsize=14)
     plt.grid(True)
-
+    ##  sigmoid激活函数
     plt.subplot(122)
     plt.contourf(x1, x2, z2)
     plt.plot([0, 1], [0, 1], "gs", markersize=20)
@@ -167,14 +167,20 @@ if __name__ == '__main__':
     plt.title("Activation function: sigmoid", fontsize=14)
     plt.grid(True)
 
+##########
+    ## 导入mnist 数据集
     (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+    ## 对像素进行归一化
     X_train = X_train.astype(np.float32).reshape(-1, 28 * 28) / 255.0
     X_test = X_test.astype(np.float32).reshape(-1, 28 * 28) / 255.0
     y_train = y_train.astype(np.int32)
     y_test = y_test.astype(np.int32)
+    ## 拆分验证集和训练集
     X_valid, X_train = X_train[:5000], X_train[5000:]
     y_valid, y_train = y_train[:5000], y_train[5000:]
 
+    ## feature_cols [NumericColumn(key='X', shape=(784,), default_value=None, dtype=tf.float32, normalizer_fn=None)]
+    ##
     feature_cols = [tf.feature_column.numeric_column("X", shape=[28 * 28])]
 
     dnn_clf = tf.estimator.DNNClassifier(
