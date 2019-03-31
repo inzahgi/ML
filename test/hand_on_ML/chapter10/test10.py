@@ -180,9 +180,9 @@ if __name__ == '__main__':
     y_valid, y_train = y_train[:5000], y_train[5000:]
 
     ## feature_cols [NumericColumn(key='X', shape=(784,), default_value=None, dtype=tf.float32, normalizer_fn=None)]
-    ##
+    ##特征列构造 数值型
     feature_cols = [tf.feature_column.numeric_column("X", shape=[28 * 28])]
-
+    ## 定义 dnn 分类器
     dnn_clf = tf.estimator.DNNClassifier(
         hidden_units=[300, 100],
         n_classes=10,
