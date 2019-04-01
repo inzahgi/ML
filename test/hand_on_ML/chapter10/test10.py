@@ -65,6 +65,18 @@ def mlp_xor(x1, x2, activation=heaviside):
     return activation(-activation(x1 + x2 - 1.5) + activation(x1 + x2 - 0.5) - 0.5)
 
 
+def neuron_layer(X, n_neurons, name, activation=None):
+    with tf.name_scope(name):
+        n_inputs = int(X.get_shape()[1])
+        stddev = 2 / np.sqrt(n_inputs)
+        init = tf.truncated_normal((n_inputs, n_neurons), stddev=stddev)
+        W = tf.Variable(init, name="kernel")
+        b = tf.Variable(tf.zeros([n_neurons]), name="bias")
+        Z = tf.matmul(X, W) + b
+        if activation is not None:
+            return activation(Z)
+        else:
+            return Z
 
 if __name__ == '__main__':
 ######-----------------------------
@@ -169,7 +181,7 @@ if __name__ == '__main__':
 
 ##########
     ## 导入mnist 数据集
-    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data("../data/mnist.npz")
     ## 对像素进行归一化
     X_train = X_train.astype(np.float32).reshape(-1, 28 * 28) / 255.0
     X_test = X_test.astype(np.float32).reshape(-1, 28 * 28) / 255.0
@@ -182,88 +194,75 @@ if __name__ == '__main__':
     ## feature_cols [NumericColumn(key='X', shape=(784,), default_value=None, dtype=tf.float32, normalizer_fn=None)]
     ##特征列构造 数值型
     feature_cols = [tf.feature_column.numeric_column("X", shape=[28 * 28])]
-    ## 定义 dnn 分类器
+    ## 定义 dnn 分类器   隐藏层 300*100
     dnn_clf = tf.estimator.DNNClassifier(
         hidden_units=[300, 100],
         n_classes=10,
         feature_columns=feature_cols
     )
-
+    ## 从numpy的输入数据中，产生读取的featrues和labels数据
     input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"X": X_train},
         y=y_train, num_epochs=40,
         batch_size=50,
         shuffle=True
     )
-
+    ## 训练dnn
     dnn_clf.train(input_fn=input_fn)
-
+    ##  构造 测试数据
     test_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"X": X_test}, y=y_test, shuffle=False)
+    ## 得到评估结果
     eval_results = dnn_clf.evaluate(input_fn=test_input_fn)
-
-    eval_results
-
+    print("line = 205 eval_results = {}".formate(eval_results))
+    ## 得到预测结果
     y_pred_iter = dnn_clf.predict(input_fn=test_input_fn)
     y_pred = list(y_pred_iter)
-    y_pred[0]
+    print("line = 209 y_pred[0] = {}".format(y_pred[0]))
 
+    ##  指定输入输出
     n_inputs = 28 * 28  # MNIST
     n_hidden1 = 300
     n_hidden2 = 100
     n_outputs = 10
 
-    # reset_graph()
-    #
-    # X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-    # y = tf.placeholder(tf.int32, shape=(None), name="y")
-    #
-    #
-    # def neuron_layer(X, n_neurons, name, activation=None):
-    #     with tf.name_scope(name):
-    #         n_inputs = int(X.get_shape()[1])
-    #         stddev = 2 / np.sqrt(n_inputs)
-    #         init = tf.truncated_normal((n_inputs, n_neurons), stddev=stddev)
-    #         W = tf.Variable(init, name="kernel")
-    #         b = tf.Variable(tf.zeros([n_neurons]), name="bias")
-    #         Z = tf.matmul(X, W) + b
-    #         if activation is not None:
-    #             return activation(Z)
-    #         else:
-    #             return Z
-    #
-    #
-    # with tf.name_scope("dnn"):
-    #     hidden1 = neuron_layer(X, n_hidden1, name="hidden1",
-    #                            activation=tf.nn.relu)
-    #     hidden2 = neuron_layer(hidden1, n_hidden2, name="hidden2",
-    #                            activation=tf.nn.relu)
-    #     logits = neuron_layer(hidden2, n_outputs, name="outputs")
-    #
-    # from tensorflow.contrib.layers import fully_connected
-    #
-    # with tf.name_scope("dnn"):
-    #     hidden1 = fully_connected(X, n_hidden1, scope="hidden1")
-    #     hidden2 = fully_connected(hidden1, n_hidden2, scope="hidden2")
-    #     logits = fully_connected(hidden2, n_outputs, scope="outputs", activation_fn=None)
-    #
-    # with tf.name_scope("loss"):
-    #     xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
-    #                                                               logits=logits)
-    #     loss = tf.reduce_mean(xentropy, name="loss")
-    #
-    # learning_rate = 0.01
-    #
-    # with tf.name_scope("train"):
-    #     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    #     training_op = optimizer.minimize(loss)
-    #
-    # with tf.name_scope("eval"):
-    #     correct = tf.nn.in_top_k(logits, y, 1)
-    #     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-    #
-    # init = tf.global_variables_initializer()
-    # saver = tf.train.Saver()
+    reset_graph()
+    ## 设置输入输出
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    ## 定义两个隐藏层和输出
+    with tf.name_scope("dnn"):
+        hidden1 = neuron_layer(X, n_hidden1, name="hidden1",
+                               activation=tf.nn.relu)
+        hidden2 = neuron_layer(hidden1, n_hidden2, name="hidden2",
+                               activation=tf.nn.relu)
+        logits = neuron_layer(hidden2, n_outputs, name="outputs")
+
+    from tensorflow.contrib.layers import fully_connected
+
+    with tf.name_scope("dnn"):
+        hidden1 = fully_connected(X, n_hidden1, scope="hidden1")
+        hidden2 = fully_connected(hidden1, n_hidden2, scope="hidden2")
+        logits = fully_connected(hidden2, n_outputs, scope="outputs", activation_fn=None)
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
+                                                                  logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    learning_rate = 0.01
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
     #
     # from tensorflow.examples.tutorials.mnist import input_data
     #
