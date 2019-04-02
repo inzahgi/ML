@@ -14,6 +14,9 @@ from sklearn.linear_model import Perceptron
 from matplotlib.colors import ListedColormap
 
 import tensorflow as tf
+from tensorflow.contrib.layers import fully_connected
+from tensorflow.examples.tutorials.mnist import input_data
+
 
 # to make this notebook's output stable across runs
 def reset_graph(seed=42):
@@ -77,6 +80,16 @@ def neuron_layer(X, n_neurons, name, activation=None):
             return activation(Z)
         else:
             return Z
+
+##  混淆批次
+def shuffle_batch(X, y, batch_size):
+    rnd_idx = np.random.permutation(len(X))  ## 获取随机批次
+    n_batches = len(X) // batch_size  ## 获取批次大小
+    for batch_idx in np.array_split(rnd_idx, n_batches):
+        X_batch, y_batch = X[batch_idx], y[batch_idx]
+        yield X_batch, y_batch
+
+
 
 if __name__ == '__main__':
 ######-----------------------------
@@ -239,75 +252,75 @@ if __name__ == '__main__':
                                activation=tf.nn.relu)
         logits = neuron_layer(hidden2, n_outputs, name="outputs")
 
-    from tensorflow.contrib.layers import fully_connected
-
+    ## 定义全连接 两个隐藏层和输出
     with tf.name_scope("dnn"):
         hidden1 = fully_connected(X, n_hidden1, scope="hidden1")
         hidden2 = fully_connected(hidden1, n_hidden2, scope="hidden2")
         logits = fully_connected(hidden2, n_outputs, scope="outputs", activation_fn=None)
-
+    ## 定义损失函数
     with tf.name_scope("loss"):
         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
                                                                   logits=logits)
         loss = tf.reduce_mean(xentropy, name="loss")
-
+    ## 设置学习速率
     learning_rate = 0.01
-
+    ## 优化损失函数
     with tf.name_scope("train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
-
+    ## 评估
     with tf.name_scope("eval"):
         correct = tf.nn.in_top_k(logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
+    ## 初始化
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
-    #
-    # from tensorflow.examples.tutorials.mnist import input_data
-    #
-    # mnist = input_data.read_data_sets("/tmp/data")
-    #
-    #
-    # def shuffle_batch(X, y, batch_size):
-    #     rnd_idx = np.random.permutation(len(X))
-    #     n_batches = len(X) // batch_size
-    #     for batch_idx in np.array_split(rnd_idx, n_batches):
-    #         X_batch, y_batch = X[batch_idx], y[batch_idx]
-    #         yield X_batch, y_batch
-    #
-    #
-    # n_epochs = 40
-    # batch_size = 50
-    #
-    # with tf.Session() as sess:
-    #     init.run()
-    #     for epoch in range(n_epochs):
-    #         for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-    #             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-    #         acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-    #         acc_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-    #         print(epoch, "Batch accuracy:", acc_batch, "Val accuracy:", acc_val)
-    #
-    #     save_path = saver.save(sess, "./my_model_final.ckpt")
-    #
-    # with tf.Session() as sess:
-    #     saver.restore(sess, "./my_model_final.ckpt")  # or better, use save_path
-    #     X_new_scaled = X_test[:20]
-    #     Z = logits.eval(feed_dict={X: X_new_scaled})
-    #     y_pred = np.argmax(Z, axis=1)
-    #
-    # print("Predicted classes:", y_pred)
-    # print("Actual classes:   ", y_test[:20])
-    #
-    # ##from tensorflow_graph_in_jupyter import show_graph
-    # ##show_graph(tf.get_default_graph())
-    #
-    # n_inputs = 28 * 28  # MNIST
-    # n_hidden1 = 300
-    # n_hidden2 = 100
-    # n_outputs = 10
-    #
+
+
+##  Execution Phase
+############################################
+    ##加载 mnist
+    mnist = input_data.read_data_sets("../data")
+
+    n_epochs = 40
+    batch_size = 50
+
+    ## 开始训练模型
+    ## 开始训练模型
+    with tf.Session() as sess:
+        init.run()
+        ## 迭代轮次
+        for epoch in range(n_epochs):
+            ##  混淆顺序
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
+            acc_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Batch accuracy:", acc_batch, "Val accuracy:", acc_val)
+
+        ## 保存模型
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+## Using the Neural Network
+####################################
+    ## 获取模型 预测结果
+    with tf.Session() as sess:
+        saver.restore(sess, "./my_model_final.ckpt")  # or better, use save_path
+        X_new_scaled = X_test[:20]
+        Z = logits.eval(feed_dict={X: X_new_scaled})
+        y_pred = np.argmax(Z, axis=1)
+
+    print("line = 313 Predicted classes: ".format(y_pred))
+    print("line = 314 Actual classes:   ".format(y_test[:20]))
+
+    ##from tensorflow_graph_in_jupyter import show_graph
+    ##show_graph(tf.get_default_graph())
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_hidden2 = 100
+    n_outputs = 10
+
     # reset_graph()
     #
     # X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
