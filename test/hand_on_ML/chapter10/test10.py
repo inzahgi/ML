@@ -321,50 +321,52 @@ if __name__ == '__main__':
     n_hidden2 = 100
     n_outputs = 10
 
-    # reset_graph()
-    #
-    # X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-    # y = tf.placeholder(tf.int32, shape=(None), name="y")
-    #
-    # with tf.name_scope("dnn"):
-    #     hidden1 = tf.layers.dense(X, n_hidden1, name="hidden1",
-    #                               activation=tf.nn.relu)
-    #     hidden2 = tf.layers.dense(hidden1, n_hidden2, name="hidden2",
-    #                               activation=tf.nn.relu)
-    #     logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
-    #     y_proba = tf.nn.softmax(logits)
-    #
-    # with tf.name_scope("loss"):
-    #     xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-    #     loss = tf.reduce_mean(xentropy, name="loss")
-    #
-    # learning_rate = 0.01
-    #
-    # with tf.name_scope("train"):
-    #     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    #     training_op = optimizer.minimize(loss)
-    #
-    # with tf.name_scope("eval"):
-    #     correct = tf.nn.in_top_k(logits, y, 1)
-    #     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-    #
-    # init = tf.global_variables_initializer()
-    # saver = tf.train.Saver()
-    #
-    # n_epochs = 20
-    # n_batches = 50
-    #
-    # with tf.Session() as sess:
-    #     init.run()
-    #     for epoch in range(n_epochs):
-    #         for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-    #             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-    #         acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-    #         acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-    #         print(epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
-    #
-    #     save_path = saver.save(sess, "./my_model_final.ckpt")
-    #
-    # ##show_graph(tf.get_default_graph())
-    #
+#####################################
+    reset_graph()
+    ## 设置输入输出占位符
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    ## 定义两个隐藏层 一个输出层的dnn
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, name="hidden1",
+                                  activation=tf.nn.relu)
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, name="hidden2",
+                                  activation=tf.nn.relu)
+        logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
+        y_proba = tf.nn.softmax(logits)
+    ## 定义损失函数
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    learning_rate = 0.01
+    ## 定义训练优化过程
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+    ## 定义评估方法
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    n_batches = 50
+    ## 开始训练
+    with tf.Session() as sess:
+        init.run() ## 初始化
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
+            acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+    ##show_graph(tf.get_default_graph())
+
     
