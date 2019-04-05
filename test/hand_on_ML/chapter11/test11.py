@@ -41,6 +41,12 @@ def save_fig(fig_id, tight_layout=True):
 def logit(z):
     return 1 / (1 + np.exp(-z))
 
+def shuffle_batch(X, y, batch_size):
+    rnd_idx = np.random.permutation(len(X))
+    n_batches = len(X) // batch_size
+    for batch_idx in np.array_split(rnd_idx, n_batches):
+        X_batch, y_batch = X[batch_idx], y[batch_idx]
+        yield X_batch, y_batch
 
 def elu(z, alpha=1):
     return np.where(z < 0, alpha * (np.exp(z) - 1), z)
@@ -54,6 +60,20 @@ def leaky_relu_1(z, alpha=0.01):
 def leaky_relu_2(z, name=None):
     return tf.maximum(0.01 * z, z, name=name)
 
+
+def leaky_relu_3(z, name=None):
+    return tf.maximum(0.01 * z, z, name=name)
+
+def selu_1(z,
+         scale=1.0507009873554804934193349852946,
+         alpha=1.6732632423543772848170429916717):
+    return scale * elu(z, alpha)
+
+
+def selu_2(z,
+        scale=1.0507009873554804934193349852946,
+        alpha=1.6732632423543772848170429916717):
+    return scale * tf.where(z >= 0.0, z, alpha * tf.nn.elu(z))
 
 if __name__ == '__main__':
     ## 生成原始数据
@@ -121,8 +141,8 @@ if __name__ == '__main__':
     y = tf.placeholder(tf.int32, shape=(None), name="y")
     ## 定义dnn 网络连接
     with tf.name_scope("dnn"):
-        hidden1 = tf.layers.dense(X, n_hidden1, activation=leaky_relu, name="hidden1")
-        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=leaky_relu, name="hidden2")
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=leaky_relu_2, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=leaky_relu_2, name="hidden2")
         logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
     ## 定义损失函数
     with tf.name_scope("loss"):
@@ -134,16 +154,18 @@ if __name__ == '__main__':
     with tf.name_scope("train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
-
+    ## 定义评估方法
     with tf.name_scope("eval"):
         correct = tf.nn.in_top_k(logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
+    ##  保存模型
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
-    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
-
+############################
+    ## 导入mnist
+    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data("../data/mnist.npz")
+    ##  定义训练 测试 验证 数据
     X_train = X_train.astype(np.float32).reshape(-1, 28 * 28) / 255.0
     X_test = X_test.astype(np.float32).reshape(-1, 28 * 28) / 255.0
     y_train = y_train.astype(np.int32)
@@ -151,15 +173,7 @@ if __name__ == '__main__':
     X_valid, X_train = X_train[:5000], X_train[5000:]
     y_valid, y_train = y_train[:5000], y_train[5000:]
 
-    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
-
-    X_train = X_train.astype(np.float32).reshape(-1, 28 * 28) / 255.0
-    X_test = X_test.astype(np.float32).reshape(-1, 28 * 28) / 255.0
-    y_train = y_train.astype(np.int32)
-    y_test = y_test.astype(np.int32)
-    X_valid, X_train = X_train[:5000], X_train[5000:]
-    y_valid, y_train = y_train[:5000], y_train[5000:]
-
+    ## 定义训练次数
     n_epochs = 40
     batch_size = 50
 
@@ -171,16 +185,17 @@ if __name__ == '__main__':
             if epoch % 5 == 0:
                 acc_batch = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
                 acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-                print(epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
+                print("line = 168 ", epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
 
         save_path = saver.save(sess, "./my_model_final.ckpt")
 
-
 ## elu
-    plt.plot(z, elu(z), "b-", linewidth=2)
-    plt.plot([-5, 5], [0, 0], 'k-')
-    plt.plot([-5, 5], [-1, -1], 'k--')
-    plt.plot([0, 0], [-2.2, 3.2], 'k-')
+##########################################
+    ## 画出elu
+    plt.plot(z, elu(z), "b-", linewidth=2)  ## 蓝色实线 elu(z)
+    plt.plot([-5, 5], [0, 0], 'k-')  ## 黑色实线  (-5, 0)  (5, 0)
+    plt.plot([-5, 5], [-1, -1], 'k--')  ## 黑色虚线  (-5. -1)  (5, -1)
+    plt.plot([0, 0], [-2.2, 3.2], 'k-')  ##  黑色实线  (0, -2.2)  (0, 3.2)
     plt.grid(True)
     plt.title(r"ELU activation function ($\alpha=1$)", fontsize=14)
     plt.axis([-5, 5, -2.2, 3.2])
@@ -188,30 +203,22 @@ if __name__ == '__main__':
     save_fig("elu_plot")
     plt.show()
 
+##################################
     reset_graph()
-
+    ## 定义输入占位符
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-
+    ## 定义隐藏层 激活函数为 elu
     hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.elu, name="hidden1")
 
-
-    def leaky_relu(z, name=None):
-        return tf.maximum(0.01 * z, z, name=name)
-
-
-    hidden1 = tf.layers.dense(X, n_hidden1, activation=leaky_relu)
+    ##  激活函数 使用自定义relu
+    hidden1 = tf.layers.dense(X, n_hidden1, activation=leaky_relu_3)
 
 ## selu
 
-def selu(z,
-         scale=1.0507009873554804934193349852946,
-         alpha=1.6732632423543772848170429916717):
-    return scale * elu(z, alpha)
-
-    plt.plot(z, selu(z), "b-", linewidth=2)
-    plt.plot([-5, 5], [0, 0], 'k-')
-    plt.plot([-5, 5], [-1.758, -1.758], 'k--')
-    plt.plot([0, 0], [-2.2, 3.2], 'k-')
+    plt.plot(z, selu_1(z), "b-", linewidth=2)  ### 蓝色实线 selu(z)
+    plt.plot([-5, 5], [0, 0], 'k-')  ## 黑色实线 (-5, 0)  (5, 0)
+    plt.plot([-5, 5], [-1.758, -1.758], 'k--')  ##  黑色虚线 (-5, -1.758)  (5, 1.758)
+    plt.plot([0, 0], [-2.2, 3.2], 'k-')  ##  黑色实线 (0, -2.2)   (0, 3.2)
     plt.grid(True)
     plt.title(r"SELU activation function", fontsize=14)
     plt.axis([-5, 5, -2.2, 3.2])
@@ -222,73 +229,75 @@ def selu(z,
     np.random.seed(42)
     Z = np.random.normal(size=(500, 100))
     for layer in range(100):
+        ##  生成随机权重
         W = np.random.normal(size=(100, 100), scale=np.sqrt(1 / 100))
-        Z = selu(np.dot(Z, W))
+        ## 通过激活函数
+        Z = selu_1(np.dot(Z, W))
+        ## 求均值
         means = np.mean(Z, axis=1)
+        ## 求标准偏差
         stds = np.std(Z, axis=1)
+        ##  每10轮打印均值 和标准差
         if layer % 10 == 0:
             print("Layer {}: {:.2f} < mean < {:.2f}, {:.2f} < std deviation < {:.2f}".format(
                 layer, means.min(), means.max(), stds.min(), stds.max()))
 
-    def selu(z,
-             scale=1.0507009873554804934193349852946,
-             alpha=1.6732632423543772848170429916717):
-        return scale * tf.where(z >= 0.0, z, alpha * tf.nn.elu(z))
+##  使用优化后的selu 2
+#######################
+    reset_graph()
+    ## 定义输入输出大小
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_hidden2 = 100
+    n_outputs = 10
+    ##  定义输入输出 占位符
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+    ## 定义dnn 网络连接
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=selu_2, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=selu_2, name="hidden2")
+        logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
+    ##  定义损失函数
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
 
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300
-#     n_hidden2 = 100
-#     n_outputs = 10
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=selu, name="hidden1")
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=selu, name="hidden2")
-#         logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     learning_rate = 0.01
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#     n_epochs = 40
-#     batch_size = 50
-#
-#     means = X_train.mean(axis=0, keepdims=True)
-#     stds = X_train.std(axis=0, keepdims=True) + 1e-10
-#     X_val_scaled = (X_valid - means) / stds
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 X_batch_scaled = (X_batch - means) / stds
-#                 sess.run(training_op, feed_dict={X: X_batch_scaled, y: y_batch})
-#             if epoch % 5 == 0:
-#                 acc_batch = accuracy.eval(feed_dict={X: X_batch_scaled, y: y_batch})
-#                 acc_valid = accuracy.eval(feed_dict={X: X_val_scaled, y: y_valid})
-#                 print(epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
-#
-#         save_path = saver.save(sess, "./my_model_final_selu.ckpt")
-#
-#
-# ##  batch normalization
-#
+    learning_rate = 0.01
+    ##  定义训练函数
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+    ##  定义评估函数
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+    ##  初始化参数
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+    n_epochs = 40
+    batch_size = 50
+    ## 求 均值 标准差 协方差
+    means = X_train.mean(axis=0, keepdims=True)
+    stds = X_train.std(axis=0, keepdims=True) + 1e-10
+    X_val_scaled = (X_valid - means) / stds
+    ##  开始训练
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                X_batch_scaled = (X_batch - means) / stds
+                sess.run(training_op, feed_dict={X: X_batch_scaled, y: y_batch})
+            if epoch % 5 == 0:
+                acc_batch = accuracy.eval(feed_dict={X: X_batch_scaled, y: y_batch})
+                acc_valid = accuracy.eval(feed_dict={X: X_val_scaled, y: y_valid})
+                print("line = 294 ", epoch, "Batch accuracy:", acc_batch, "Validation accuracy:", acc_valid)
+
+        save_path = saver.save(sess, "./my_model_final_selu.ckpt")
+
+
+##  batch normalization
+
 #     reset_graph()
 #
 #     n_inputs = 28 * 28
