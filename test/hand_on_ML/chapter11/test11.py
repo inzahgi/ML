@@ -461,46 +461,46 @@ if __name__ == '__main__':
         save_path = saver.save(sess, "./my_model_final.ckpt")
 
 
-##  reusing pretrained layers
+#  reusing pretrained layers
 
-#     reset_graph()
-#
-#     saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
-#
-#     for op in tf.get_default_graph().get_operations():
-#         print(op.name)
-#
-#
-#     ##from tensorflow_graph_in_jupyter import show_graph
-#     ##show_graph(tf.get_default_graph())
-#
-#     X = tf.get_default_graph().get_tensor_by_name("X:0")
-#     y = tf.get_default_graph().get_tensor_by_name("y:0")
-#
-#     accuracy = tf.get_default_graph().get_tensor_by_name("eval/accuracy:0")
-#
-#     training_op = tf.get_default_graph().get_operation_by_name("GradientDescent")
-#
-#     for op in (X, y, accuracy, training_op):
-#         tf.add_to_collection("my_important_ops", op)
-#
-#     X, y, accuracy, training_op = tf.get_collection("my_important_ops")
-#
-#     with tf.Session() as sess:
-#         saver.restore(sess, "./my_model_final.ckpt")
-#         # continue training the model...
-#
-#     with tf.Session() as sess:
-#         saver.restore(sess, "./my_model_final.ckpt")
-#
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_new_model_final.ckpt")
-#
+    reset_graph()
+
+    saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
+
+    for op in tf.get_default_graph().get_operations():
+        print(op.name)
+
+
+    ##from tensorflow_graph_in_jupyter import show_graph
+    ##show_graph(tf.get_default_graph())
+
+    X = tf.get_default_graph().get_tensor_by_name("X:0")
+    y = tf.get_default_graph().get_tensor_by_name("y:0")
+
+    accuracy = tf.get_default_graph().get_tensor_by_name("eval/accuracy:0")
+
+    training_op = tf.get_default_graph().get_operation_by_name("GradientDescent")
+
+    for op in (X, y, accuracy, training_op):
+        tf.add_to_collection("my_important_ops", op)
+
+    X, y, accuracy, training_op = tf.get_collection("my_important_ops")
+
+    with tf.Session() as sess:
+        saver.restore(sess, "./my_model_final.ckpt")
+        # continue training the model...
+
+    with tf.Session() as sess:
+        saver.restore(sess, "./my_model_final.ckpt")
+
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = saver.save(sess, "./my_new_model_final.ckpt")
+
 #     reset_graph()
 #
 #     n_inputs = 28 * 28  # MNIST
