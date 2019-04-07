@@ -12,6 +12,7 @@ import os
 
 import tensorflow as tf
 
+from functools import partial
 
 # to make this notebook's output stable across runs
 def reset_graph(seed=42):
@@ -308,83 +309,92 @@ if __name__ == '__main__':
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
     ## 定义训练
     training = tf.placeholder_with_default(False, shape=(), name='training')
-
+    ## 定义 headden1
     hidden1 = tf.layers.dense(X, n_hidden1, name="hidden1")
+    ## 定义批量规范化层的功能接口
     bn1 = tf.layers.batch_normalization(hidden1, training=training, momentum=0.9)
+    ##  指定批量化训练激活函数 输出
     bn1_act = tf.nn.elu(bn1)
-
+    ## 定义 hidden2
     hidden2 = tf.layers.dense(bn1_act, n_hidden2, name="hidden2")
     bn2 = tf.layers.batch_normalization(hidden2, training=training, momentum=0.9)
     bn2_act = tf.nn.elu(bn2)
-
+    ## 定义输出层
     logits_before_bn = tf.layers.dense(bn2_act, n_outputs, name="outputs")
     logits = tf.layers.batch_normalization(logits_before_bn, training=training,
                                            momentum=0.9)
 
+##############################
+    ##使用partial 设置偏函数方法
     reset_graph()
-
+    ## 定义输入占位符
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
     training = tf.placeholder_with_default(False, shape=(), name='training')
 
-    from functools import partial
-
+    ## 设置批量训练的偏函数
     my_batch_norm_layer = partial(tf.layers.batch_normalization,
                                   training=training, momentum=0.9)
-
+    ## 定义hidden1
     hidden1 = tf.layers.dense(X, n_hidden1, name="hidden1")
     bn1 = my_batch_norm_layer(hidden1)
     bn1_act = tf.nn.elu(bn1)
+    ## 定义hidden2
     hidden2 = tf.layers.dense(bn1_act, n_hidden2, name="hidden2")
     bn2 = my_batch_norm_layer(hidden2)
     bn2_act = tf.nn.elu(bn2)
+    ## 定义输出
     logits_before_bn = tf.layers.dense(bn2_act, n_outputs, name="outputs")
     logits = my_batch_norm_layer(logits_before_bn)
 
+######################
+    ##  为MNIST构建一个神经网络，使用ELU激活函数和每层的批量标准化
     reset_graph()
 
     batch_norm_momentum = 0.9
-
+    ## 定义输入输出
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
     y = tf.placeholder(tf.int32, shape=(None), name="y")
     training = tf.placeholder_with_default(False, shape=(), name='training')
-
+    ##  定义 dnn
     with tf.name_scope("dnn"):
         he_init = tf.variance_scaling_initializer()
-
+        ## 使用partial定义 批量训练接口函数
         my_batch_norm_layer = partial(
             tf.layers.batch_normalization,
             training=training,
             momentum=batch_norm_momentum)
-
+        ##  使用partial定义 隐藏层接口函数
         my_dense_layer = partial(
             tf.layers.dense,
             kernel_initializer=he_init)
-
+        ## 定义hidden1
         hidden1 = my_dense_layer(X, n_hidden1, name="hidden1")
         bn1 = tf.nn.elu(my_batch_norm_layer(hidden1))
+        ## 定义hidden2
         hidden2 = my_dense_layer(bn1, n_hidden2, name="hidden2")
         bn2 = tf.nn.elu(my_batch_norm_layer(hidden2))
+        ## 定义输出
         logits_before_bn = my_dense_layer(bn2, n_outputs, name="outputs")
         logits = my_batch_norm_layer(logits_before_bn)
-
+    ## 定义损失函数
     with tf.name_scope("loss"):
         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
         loss = tf.reduce_mean(xentropy, name="loss")
-
+    ## 定义训练函数
     with tf.name_scope("train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
-
+    ## 定义评估函数
     with tf.name_scope("eval"):
         correct = tf.nn.in_top_k(logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
+    ## 初始化参数和
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
     n_epochs = 20
     batch_size = 200
-
+    ## 获取所有更新图集合
     extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
     with tf.Session() as sess:
@@ -394,19 +404,19 @@ if __name__ == '__main__':
                 sess.run([training_op, extra_update_ops],
                          feed_dict={training: True, X: X_batch, y: y_batch})
             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-            print(epoch, "Validation accuracy:", accuracy_val)
-
+            print("line = 407, ", epoch, "Validation accuracy:", accuracy_val)
+        ## 保存训练好的模型
         save_path = saver.save(sess, "./my_model_final.ckpt")
-
+    ## 输出所有变量
     [v.name for v in tf.trainable_variables()]
 
     [v.name for v in tf.global_variables()]
 
-
-##  gradient clipping
+##########################################################
+##  gradient clipping   梯度剪辑
 
     reset_graph()
-
+    ## 定义输出规模
     n_inputs = 28 * 28  # MNIST
     n_hidden1 = 300
     n_hidden2 = 50
@@ -414,10 +424,10 @@ if __name__ == '__main__':
     n_hidden4 = 50
     n_hidden5 = 50
     n_outputs = 10
-
+    ## 定义输入输出
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
     y = tf.placeholder(tf.int32, shape=(None), name="y")
-
+    ## 定义 dnn网络
     with tf.name_scope("dnn"):
         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
@@ -425,25 +435,29 @@ if __name__ == '__main__':
         hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")
         hidden5 = tf.layers.dense(hidden4, n_hidden5, activation=tf.nn.relu, name="hidden5")
         logits = tf.layers.dense(hidden5, n_outputs, name="outputs")
-
+    ## 定义损失函数
     with tf.name_scope("loss"):
+        ##计算logits和labels之间的稀疏softmax交叉熵。
         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
         loss = tf.reduce_mean(xentropy, name="loss")
 
     learning_rate = 0.01
 
     threshold = 1.0
-
+    ## 定义梯度下降优化器
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    ## 计算梯度分布
     grads_and_vars = optimizer.compute_gradients(loss)
+    ## clip_by_value  按阈值截断范围
     capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var)
                   for grad, var in grads_and_vars]
+    ## 更新梯度
     training_op = optimizer.apply_gradients(capped_gvs)
-
+    ## 定义评估
     with tf.name_scope("eval"):
         correct = tf.nn.in_top_k(logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-
+    ## 初始化
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
@@ -456,24 +470,24 @@ if __name__ == '__main__':
             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-            print(epoch, "Validation accuracy:", accuracy_val)
+            print("line = 473 ", epoch, "Validation accuracy:", accuracy_val)
 
         save_path = saver.save(sess, "./my_model_final.ckpt")
 
-
-#  reusing pretrained layers
+########################################################
+#  reusing pretrained layers  复用网络
 
     reset_graph()
-
+    ## 导入训练图
     saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
 
     for op in tf.get_default_graph().get_operations():
-        print(op.name)
+        print("line = 485 op.name = {}".format(op.name))
 
 
     ##from tensorflow_graph_in_jupyter import show_graph
     ##show_graph(tf.get_default_graph())
-
+    ## 按名称获取张量值
     X = tf.get_default_graph().get_tensor_by_name("X:0")
     y = tf.get_default_graph().get_tensor_by_name("y:0")
 
@@ -485,11 +499,11 @@ if __name__ == '__main__':
         tf.add_to_collection("my_important_ops", op)
 
     X, y, accuracy, training_op = tf.get_collection("my_important_ops")
-
+    ## 恢复模型
     with tf.Session() as sess:
         saver.restore(sess, "./my_model_final.ckpt")
         # continue training the model...
-
+    ## 恢复模型直接训练
     with tf.Session() as sess:
         saver.restore(sess, "./my_model_final.ckpt")
 
