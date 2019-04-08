@@ -587,22 +587,22 @@ if __name__ == '__main__':
     # 新的输出层
     new_hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="new_hidden4")
     new_logits = tf.layers.dense(new_hidden4, n_outputs, name="new_outputs")
-
+    ## 定义新的损失函数图
     with tf.name_scope("new_loss"):
         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=new_logits)
         loss = tf.reduce_mean(xentropy, name="loss")
-
+    ## 定义新的评估函数图
     with tf.name_scope("new_eval"):
         correct = tf.nn.in_top_k(new_logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-
+    ## 定义新的训练函数图
     with tf.name_scope("new_train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
 
     init = tf.global_variables_initializer()
     new_saver = tf.train.Saver()
-
+    ## 加载模型重新训练
     with tf.Session() as sess:
         init.run()
         saver.restore(sess, "./my_model_final.ckpt")
