@@ -489,11 +489,15 @@ if __name__ == '__main__':
     ##show_graph(tf.get_default_graph())
     ## 按名称获取张量值
     X = tf.get_default_graph().get_tensor_by_name("X:0")
+    print("line = 492 X = {}".format(X))
     y = tf.get_default_graph().get_tensor_by_name("y:0")
+    print("line = 494 y ={}".format(y))
 
     accuracy = tf.get_default_graph().get_tensor_by_name("eval/accuracy:0")
+    print("line = 497 accuracy = {}".format(accuracy))
 
     training_op = tf.get_default_graph().get_operation_by_name("GradientDescent")
+    print("line = 500 training_op = {}".format(training_op))
 
     for op in (X, y, accuracy, training_op):
         tf.add_to_collection("my_important_ops", op)
@@ -512,170 +516,172 @@ if __name__ == '__main__':
                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
             print(epoch, "Validation accuracy:", accuracy_val)
+        ## 重新保存训练模型
+        save_path = saver.save(sess, "./my_new_model_final.ckpt")
+
+############################################
+    ## 访问构建原始图形的Python 而不是import_meta_grap
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_hidden2 = 50
+    n_hidden3 = 50
+    n_hidden4 = 50
+    n_outputs = 10
+    ## 定义输入输出
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+    ## 定义隐藏和输出层
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
+        hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden3")
+        hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")
+        hidden5 = tf.layers.dense(hidden4, n_hidden5, activation=tf.nn.relu, name="hidden5")
+        logits = tf.layers.dense(hidden5, n_outputs, name="outputs")
+    ## 定义损失函数
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+    ## 定义评估函数
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    learning_rate = 0.01
+    threshold = 1.0
+    ##
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    grads_and_vars = optimizer.compute_gradients(loss)
+    capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var)
+                  for grad, var in grads_and_vars]
+    training_op = optimizer.apply_gradients(capped_gvs)
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        saver.restore(sess, "./my_model_final.ckpt")
+
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
 
         save_path = saver.save(sess, "./my_new_model_final.ckpt")
 
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300
-#     n_hidden2 = 50
-#     n_hidden3 = 50
-#     n_hidden4 = 50
-#     n_outputs = 10
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
-#         hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden3")
-#         hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")
-#         hidden5 = tf.layers.dense(hidden4, n_hidden5, activation=tf.nn.relu, name="hidden5")
-#         logits = tf.layers.dense(hidden5, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     learning_rate = 0.01
-#     threshold = 1.0
-#
-#     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#     grads_and_vars = optimizer.compute_gradients(loss)
-#     capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var)
-#                   for grad, var in grads_and_vars]
-#     training_op = optimizer.apply_gradients(capped_gvs)
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     with tf.Session() as sess:
-#         saver.restore(sess, "./my_model_final.ckpt")
-#
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_new_model_final.ckpt")
-#
-#     reset_graph()
-#
-#     n_hidden4 = 20  # new layer
-#     n_outputs = 10  # new layer
-#
-#     saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
-#
-#     X = tf.get_default_graph().get_tensor_by_name("X:0")
-#     y = tf.get_default_graph().get_tensor_by_name("y:0")
-#
-#     hidden3 = tf.get_default_graph().get_tensor_by_name("dnn/hidden3/Relu:0")
-#
-#     # 新的输出层
-#     new_hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="new_hidden4")
-#     new_logits = tf.layers.dense(new_hidden4, n_outputs, name="new_outputs")
-#
-#     with tf.name_scope("new_loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=new_logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("new_eval"):
-#         correct = tf.nn.in_top_k(new_logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     with tf.name_scope("new_train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     init = tf.global_variables_initializer()
-#     new_saver = tf.train.Saver()
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         saver.restore(sess, "./my_model_final.ckpt")
-#
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = new_saver.save(sess, "./my_new_model_final.ckpt")
-#
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300  # reused
-#     n_hidden2 = 50  # reused
-#     n_hidden3 = 50  # reused
-#     n_hidden4 = 20  # new!
-#     n_outputs = 10  # new!
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")  # reused
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")  # reused
-#         hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden3")  # reused
-#         hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")  # new!
-#         logits = tf.layers.dense(hidden4, n_outputs, name="outputs")  # new!
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-#                                    scope="hidden[123]")  # regular expression
-#     restore_saver = tf.train.Saver(reuse_vars)  # to restore layers 1-3
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         restore_saver.restore(sess, "./my_model_final.ckpt")
-#
-#         for epoch in range(n_epochs):  # not shown in the book
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):  # not shown
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})  # not shown
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
-#             print(epoch, "Validation accuracy:", accuracy_val)  # not shown
-#
-#         save_path = saver.save(sess, "./my_new_model_final.ckpt")
-#
-#     [...]  # build new model with the same definition as before for hidden layers 1-3
-#
-#     init = tf.global_variables_initializer()
-#
-#     reuse_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-#                                    scope="hidden[123]")
-#     reuse_vars_dict = dict([(var.name, var.name) for var in reuse_vars])
-#     original_saver = tf.Saver(reuse_vars_dict)  # saver to restore the original model
-#
-#     new_saver = tf.Saver()  # saver to save the new model
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#         original_saver.restore("./my_original_model.ckpt")  # restore layers 1 to 3
-#         [...]  # train the new model
-#         new_saver.save("./my_new_model.ckpt")  # save the whole model
-#
+    reset_graph()
+
+    n_hidden4 = 20  # new layer
+    n_outputs = 10  # new layer
+
+    saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
+
+    X = tf.get_default_graph().get_tensor_by_name("X:0")
+    y = tf.get_default_graph().get_tensor_by_name("y:0")
+
+    hidden3 = tf.get_default_graph().get_tensor_by_name("dnn/hidden3/Relu:0")
+
+    # 新的输出层
+    new_hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="new_hidden4")
+    new_logits = tf.layers.dense(new_hidden4, n_outputs, name="new_outputs")
+
+    with tf.name_scope("new_loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=new_logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("new_eval"):
+        correct = tf.nn.in_top_k(new_logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    with tf.name_scope("new_train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    init = tf.global_variables_initializer()
+    new_saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        init.run()
+        saver.restore(sess, "./my_model_final.ckpt")
+
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = new_saver.save(sess, "./my_new_model_final.ckpt")
+
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300  # reused
+    n_hidden2 = 50  # reused
+    n_hidden3 = 50  # reused
+    n_hidden4 = 20  # new!
+    n_outputs = 10  # new!
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")  # reused
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")  # reused
+        hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden3")  # reused
+        hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")  # new!
+        logits = tf.layers.dense(hidden4, n_outputs, name="outputs")  # new!
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                   scope="hidden[123]")  # regular expression
+    restore_saver = tf.train.Saver(reuse_vars)  # to restore layers 1-3
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    with tf.Session() as sess:
+        init.run()
+        restore_saver.restore(sess, "./my_model_final.ckpt")
+
+        for epoch in range(n_epochs):  # not shown in the book
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):  # not shown
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})  # not shown
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
+            print(epoch, "Validation accuracy:", accuracy_val)  # not shown
+
+        save_path = saver.save(sess, "./my_new_model_final.ckpt")
+
+    [...]  # build new model with the same definition as before for hidden layers 1-3
+
+    init = tf.global_variables_initializer()
+
+    reuse_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                   scope="hidden[123]")
+    reuse_vars_dict = dict([(var.name, var.name) for var in reuse_vars])
+    original_saver = tf.Saver(reuse_vars_dict)  # saver to restore the original model
+
+    new_saver = tf.Saver()  # saver to save the new model
+
+    with tf.Session() as sess:
+        sess.run(init)
+        original_saver.restore("./my_original_model.ckpt")  # restore layers 1 to 3
+        [...]  # train the new model
+        new_saver.save("./my_new_model.ckpt")  # save the whole model
+
 # ## reusing models from other frameworks
 #
 #     reset_graph()
