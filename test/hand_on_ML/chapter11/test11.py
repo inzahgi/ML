@@ -551,7 +551,7 @@ if __name__ == '__main__':
 
     learning_rate = 0.01
     threshold = 1.0
-    ##
+    #### 定义梯度优化器
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     grads_and_vars = optimizer.compute_gradients(loss)
     capped_gvs = [(tf.clip_by_value(grad, -threshold, threshold), var)
@@ -560,7 +560,7 @@ if __name__ == '__main__':
 
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
-
+    ## 加载模型训练数据
     with tf.Session() as sess:
         saver.restore(sess, "./my_model_final.ckpt")
 
@@ -572,16 +572,18 @@ if __name__ == '__main__':
 
         save_path = saver.save(sess, "./my_new_model_final.ckpt")
 
+##############################################
+    ## 仅重用低层模型
     reset_graph()
-
+    ## 增加新的 隐藏层
     n_hidden4 = 20  # new layer
     n_outputs = 10  # new layer
-
+    ## 加载模型
     saver = tf.train.import_meta_graph("./my_model_final.ckpt.meta")
-
+    ##获取输入输出 X y
     X = tf.get_default_graph().get_tensor_by_name("X:0")
     y = tf.get_default_graph().get_tensor_by_name("y:0")
-
+    ## 获取第三个隐藏层参数
     hidden3 = tf.get_default_graph().get_tensor_by_name("dnn/hidden3/Relu:0")
 
     # 新的输出层
@@ -615,6 +617,8 @@ if __name__ == '__main__':
 
         save_path = new_saver.save(sess, "./my_new_model_final.ckpt")
 
+############################################################################
+    ### 重用指定层 删除其余层
     reset_graph()
 
     n_inputs = 28 * 28  # MNIST
