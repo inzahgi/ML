@@ -649,9 +649,10 @@ if __name__ == '__main__':
     with tf.name_scope("train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
-
+    ## 获取重用的指定变量   隐藏层1-3
     reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
                                    scope="hidden[123]")  # regular expression
+    ##保存变量
     restore_saver = tf.train.Saver(reuse_vars)  # to restore layers 1-3
 
     init = tf.global_variables_initializer()
@@ -659,6 +660,7 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         init.run()
+        ## 加载指定变量
         restore_saver.restore(sess, "./my_model_final.ckpt")
 
         for epoch in range(n_epochs):  # not shown in the book
@@ -669,10 +671,11 @@ if __name__ == '__main__':
 
         save_path = saver.save(sess, "./my_new_model_final.ckpt")
 
-    [...]  # build new model with the same definition as before for hidden layers 1-3
-
+    ###[...]  # build new model with the same definition as before for hidden layers 1-3
+####################################################
+    ### 变量初始化
     init = tf.global_variables_initializer()
-
+    ###  定义隐藏层1-3 的变量集合
     reuse_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                    scope="hidden[123]")
     reuse_vars_dict = dict([(var.name, var.name) for var in reuse_vars])
@@ -682,8 +685,10 @@ if __name__ == '__main__':
 
     with tf.Session() as sess:
         sess.run(init)
+        ## 加载原始模型
         original_saver.restore("./my_original_model.ckpt")  # restore layers 1 to 3
         [...]  # train the new model
+        ## 保存新模型
         new_saver.save("./my_new_model.ckpt")  # save the whole model
 
 # ## reusing models from other frameworks
