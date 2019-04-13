@@ -673,91 +673,91 @@ if __name__ == '__main__':
 
     ###[...]  # build new model with the same definition as before for hidden layers 1-3
 ####################################################
-    ### 变量初始化
-    init = tf.global_variables_initializer()
-    ###  定义隐藏层1-3 的变量集合
-    reuse_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                   scope="hidden[123]")
-    reuse_vars_dict = dict([(var.name, var.name) for var in reuse_vars])
-    original_saver = tf.Saver(reuse_vars_dict)  # saver to restore the original model
+    # ### 变量初始化
+    # init = tf.global_variables_initializer()
+    # ###  定义隐藏层1-3 的变量集合
+    # reuse_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+    #                                scope="hidden[123]")
+    # reuse_vars_dict = dict([(var.name, var.name) for var in reuse_vars])
+    # original_saver = tf.Saver(reuse_vars_dict)  # saver to restore the original model
+    #
+    # new_saver = tf.Saver()  # saver to save the new model
+    #
+    # with tf.Session() as sess:
+    #     sess.run(init)
+    #     ## 加载原始模型
+    #     original_saver.restore("./my_original_model.ckpt")  # restore layers 1 to 3
+    #     [...]  # train the new model
+    #     ## 保存新模型
+    #     new_saver.save("./my_new_model.ckpt")  # save the whole model
 
-    new_saver = tf.Saver()  # saver to save the new model
+## reusing models from other frameworks
+
+    reset_graph()
+
+    n_inputs = 2
+    n_hidden1 = 3
+
+    original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
+    original_b = [7., 8., 9.]  # Load the biases from the other framework
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+    # [...] Build the rest of the model
+
+    # Get a handle on the assignment nodes for the hidden1 variables
+    graph = tf.get_default_graph()
+    assign_kernel = graph.get_operation_by_name("hidden1/kernel/Assign")
+    assign_bias = graph.get_operation_by_name("hidden1/bias/Assign")
+    init_kernel = assign_kernel.inputs[1]
+    init_bias = assign_bias.inputs[1]
+
+    init = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        sess.run(init, feed_dict={init_kernel: original_w, init_bias: original_b})
+        # [...] Train the model on your new task
+        print(hidden1.eval(feed_dict={X: [[10.0, 11.0]]}))  # not shown in the book
+
+    reset_graph()
+
+    n_inputs = 2
+    n_hidden1 = 3
+
+    original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
+    original_b = [7., 8., 9.]  # Load the biases from the other framework
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+    # [...] Build the rest of the model
+
+    # Get a handle on the variables of layer hidden1
+    with tf.variable_scope("", default_name="", reuse=True):  # root scope
+        hidden1_weights = tf.get_variable("hidden1/kernel")
+        hidden1_biases = tf.get_variable("hidden1/bias")
+
+    # Create dedicated placeholders and assignment nodes
+    original_weights = tf.placeholder(tf.float32, shape=(n_inputs, n_hidden1))
+    original_biases = tf.placeholder(tf.float32, shape=n_hidden1)
+    assign_hidden1_weights = tf.assign(hidden1_weights, original_weights)
+    assign_hidden1_biases = tf.assign(hidden1_biases, original_biases)
+
+    init = tf.global_variables_initializer()
 
     with tf.Session() as sess:
         sess.run(init)
-        ## 加载原始模型
-        original_saver.restore("./my_original_model.ckpt")  # restore layers 1 to 3
-        [...]  # train the new model
-        ## 保存新模型
-        new_saver.save("./my_new_model.ckpt")  # save the whole model
+        sess.run(assign_hidden1_weights, feed_dict={original_weights: original_w})
+        sess.run(assign_hidden1_biases, feed_dict={original_biases: original_b})
+        # [...] Train the model on your new task
+        print(hidden1.eval(feed_dict={X: [[10.0, 11.0]]}))
 
-# ## reusing models from other frameworks
-#
-#     reset_graph()
-#
-#     n_inputs = 2
-#     n_hidden1 = 3
-#
-#     original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
-#     original_b = [7., 8., 9.]  # Load the biases from the other framework
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#     # [...] Build the rest of the model
-#
-#     # Get a handle on the assignment nodes for the hidden1 variables
-#     graph = tf.get_default_graph()
-#     assign_kernel = graph.get_operation_by_name("hidden1/kernel/Assign")
-#     assign_bias = graph.get_operation_by_name("hidden1/bias/Assign")
-#     init_kernel = assign_kernel.inputs[1]
-#     init_bias = assign_bias.inputs[1]
-#
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         sess.run(init, feed_dict={init_kernel: original_w, init_bias: original_b})
-#         # [...] Train the model on your new task
-#         print(hidden1.eval(feed_dict={X: [[10.0, 11.0]]}))  # not shown in the book
-#
-#     reset_graph()
-#
-#     n_inputs = 2
-#     n_hidden1 = 3
-#
-#     original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
-#     original_b = [7., 8., 9.]  # Load the biases from the other framework
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#     # [...] Build the rest of the model
-#
-#     # Get a handle on the variables of layer hidden1
-#     with tf.variable_scope("", default_name="", reuse=True):  # root scope
-#         hidden1_weights = tf.get_variable("hidden1/kernel")
-#         hidden1_biases = tf.get_variable("hidden1/bias")
-#
-#     # Create dedicated placeholders and assignment nodes
-#     original_weights = tf.placeholder(tf.float32, shape=(n_inputs, n_hidden1))
-#     original_biases = tf.placeholder(tf.float32, shape=n_hidden1)
-#     assign_hidden1_weights = tf.assign(hidden1_weights, original_weights)
-#     assign_hidden1_biases = tf.assign(hidden1_biases, original_biases)
-#
-#     init = tf.global_variables_initializer()
-#
-#     with tf.Session() as sess:
-#         sess.run(init)
-#         sess.run(assign_hidden1_weights, feed_dict={original_weights: original_w})
-#         sess.run(assign_hidden1_biases, feed_dict={original_biases: original_b})
-#         # [...] Train the model on your new task
-#         print(hidden1.eval(feed_dict={X: [[10.0, 11.0]]}))
-#
-#     tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="hidden1")
-#
-#     tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
-#
-#     tf.get_default_graph().get_tensor_by_name("hidden1/bias:0")
-#
-#
+    tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope="hidden1")
+
+    tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
+
+    tf.get_default_graph().get_tensor_by_name("hidden1/bias:0")
+
+
 # ## freezing the lower layers
 #     reset_graph()
 #
