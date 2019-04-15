@@ -630,22 +630,22 @@ if __name__ == '__main__':
 
     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
     y = tf.placeholder(tf.int32, shape=(None), name="y")
-
+    ## dnn 网络连接
     with tf.name_scope("dnn"):
         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")  # reused
         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")  # reused
         hidden3 = tf.layers.dense(hidden2, n_hidden3, activation=tf.nn.relu, name="hidden3")  # reused
         hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu, name="hidden4")  # new!
         logits = tf.layers.dense(hidden4, n_outputs, name="outputs")  # new!
-
+    ## 定义损失函数
     with tf.name_scope("loss"):
         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
         loss = tf.reduce_mean(xentropy, name="loss")
-
+    ## 定义评估函数
     with tf.name_scope("eval"):
         correct = tf.nn.in_top_k(logits, y, 1)
         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-
+    ## 定义训练函数
     with tf.name_scope("train"):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         training_op = optimizer.minimize(loss)
@@ -692,12 +692,12 @@ if __name__ == '__main__':
     #     new_saver.save("./my_new_model.ckpt")  # save the whole model
 
 ## reusing models from other frameworks
-
+#######################################################################
     reset_graph()
 
     n_inputs = 2
     n_hidden1 = 3
-
+    ## 声明原始的 权重和 偏置
     original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
     original_b = [7., 8., 9.]  # Load the biases from the other framework
 
@@ -719,11 +719,12 @@ if __name__ == '__main__':
         # [...] Train the model on your new task
         print(hidden1.eval(feed_dict={X: [[10.0, 11.0]]}))  # not shown in the book
 
+##################################################################
     reset_graph()
 
     n_inputs = 2
     n_hidden1 = 3
-
+    ###
     original_w = [[1., 2., 3.], [4., 5., 6.]]  # Load the weights from the other framework
     original_b = [7., 8., 9.]  # Load the biases from the other framework
 
