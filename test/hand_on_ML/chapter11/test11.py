@@ -816,6 +816,7 @@ if __name__ == '__main__':
 
         save_path = saver.save(sess, "./my_new_model_final.ckpt")
 
+##  获取保存的底层模型继续进行训练
 ##################################
     reset_graph()
 
@@ -872,197 +873,202 @@ if __name__ == '__main__':
 
         save_path = saver.save(sess, "./my_new_model_final.ckpt")
 
-#
-# ## caching the frozen layers
-#
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300  # reused
-#     n_hidden2 = 50  # reused
-#     n_hidden3 = 50  # reused
-#     n_hidden4 = 20  # new!
-#     n_outputs = 10  # new!
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu,
-#                                   name="hidden1")  # reused frozen
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu,
-#                                   name="hidden2")  # reused frozen & cached
-#         hidden2_stop = tf.stop_gradient(hidden2)
-#         hidden3 = tf.layers.dense(hidden2_stop, n_hidden3, activation=tf.nn.relu,
-#                                   name="hidden3")  # reused, not frozen
-#         hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu,
-#                                   name="hidden4")  # new!
-#         logits = tf.layers.dense(hidden4, n_outputs, name="outputs")  # new!
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-#                                    scope="hidden[123]")  # regular expression
-#     restore_saver = tf.train.Saver(reuse_vars)  # to restore layers 1-3
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_batches = len(X_train) // batch_size
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         restore_saver.restore(sess, "./my_model_final.ckpt")
-#
-#         h2_cache = sess.run(hidden2, feed_dict={X: X_train})
-#         h2_cache_valid = sess.run(hidden2, feed_dict={X: X_valid})  # not shown in the book
-#
-#         for epoch in range(n_epochs):
-#             shuffled_idx = np.random.permutation(len(X_train))
-#             hidden2_batches = np.array_split(h2_cache[shuffled_idx], n_batches)
-#             y_batches = np.array_split(y_train[shuffled_idx], n_batches)
-#             for hidden2_batch, y_batch in zip(hidden2_batches, y_batches):
-#                 sess.run(training_op, feed_dict={hidden2: hidden2_batch, y: y_batch})
-#
-#             accuracy_val = accuracy.eval(feed_dict={hidden2: h2_cache_valid,  # not shown
-#                                                     y: y_valid})  # not shown
-#             print(epoch, "Validation accuracy:", accuracy_val)  # not shown
-#
-#         save_path = saver.save(sess, "./my_new_model_final.ckpt")
-#
-#
-# ##  faster optimizers
-#     ## 在TensorFlow中实现动量优化是一个明智的选择：只需用MomentumOptimizer替换GradientDescentOptimizer，
-#     ##  Momentum优化的一个缺点是它增加了另一个需要调整的超参数。 然而，0.9的动量值通常在实践中运作良好，并且几乎总是比梯度下降更快。
-#     optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
-#                                            momentum=0.9)
-#     ## 只需在创建 MomentumOptimizer 时设置 use_nesterov = True
-#     optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
-#                                            momentum=0.9, use_nesterov=True)
-#
-#     ## adagrad
-#     optimizer = tf.train.AdagradOptimizer(learning_rate=learning_rate)
-#
-#     ## RMSProp
-#     optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate,
-#                                           momentum=0.9, decay=0.9, epsilon=1e-10)
-#
-#     ## adam optimization
-#     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-#
-#     ## learning rate scheduling
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300
-#     n_hidden2 = 50
-#     n_outputs = 10
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
-#         logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     with tf.name_scope("train"):  # not shown in the book
-#         initial_learning_rate = 0.1
-#         decay_steps = 10000
-#         decay_rate = 1 / 10
-#         global_step = tf.Variable(0, trainable=False, name="global_step")
-#         learning_rate = tf.train.exponential_decay(initial_learning_rate, global_step,
-#                                                    decay_steps, decay_rate)
-#         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9)
-#         training_op = optimizer.minimize(loss, global_step=global_step)
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 5
-#     batch_size = 50
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")
-#
-#
-# ## avoiding overfitting through regularization
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300
-#     n_outputs = 10
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#         logits = tf.layers.dense(hidden1, n_outputs, name="outputs")
-#
-#     W1 = tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
-#     W2 = tf.get_default_graph().get_tensor_by_name("outputs/kernel:0")
-#
-#     scale = 0.001  # l1 regularization hyperparameter
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
-#                                                                   logits=logits)
-#         base_loss = tf.reduce_mean(xentropy, name="avg_xentropy")
-#         reg_losses = tf.reduce_sum(tf.abs(W1)) + tf.reduce_sum(tf.abs(W2))
-#         loss = tf.add(base_loss, scale * reg_losses, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     learning_rate = 0.01
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 20
-#     batch_size = 200
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")
-#
+##################################
+
+## caching the frozen layers
+## 缓存冻结层
+######################################
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300  # reused
+    n_hidden2 = 50  # reused
+    n_hidden3 = 50  # reused
+    n_hidden4 = 20  # new!
+    n_outputs = 10  # new!
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu,
+                                  name="hidden1")  # reused frozen
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu,
+                                  name="hidden2")  # reused frozen & cached
+        hidden2_stop = tf.stop_gradient(hidden2)
+        hidden3 = tf.layers.dense(hidden2_stop, n_hidden3, activation=tf.nn.relu,
+                                  name="hidden3")  # reused, not frozen
+        hidden4 = tf.layers.dense(hidden3, n_hidden4, activation=tf.nn.relu,
+                                  name="hidden4")  # new!
+        logits = tf.layers.dense(hidden4, n_outputs, name="outputs")  # new!
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    reuse_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                   scope="hidden[123]")  # regular expression
+    restore_saver = tf.train.Saver(reuse_vars)  # to restore layers 1-3
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_batches = len(X_train) // batch_size
+
+    with tf.Session() as sess:
+        init.run()
+        restore_saver.restore(sess, "./my_model_final.ckpt")
+
+        h2_cache = sess.run(hidden2, feed_dict={X: X_train})
+        h2_cache_valid = sess.run(hidden2, feed_dict={X: X_valid})  # not shown in the book
+
+        for epoch in range(n_epochs):
+            shuffled_idx = np.random.permutation(len(X_train))
+            hidden2_batches = np.array_split(h2_cache[shuffled_idx], n_batches)
+            y_batches = np.array_split(y_train[shuffled_idx], n_batches)
+            for hidden2_batch, y_batch in zip(hidden2_batches, y_batches):
+                sess.run(training_op, feed_dict={hidden2: hidden2_batch, y: y_batch})
+
+            accuracy_val = accuracy.eval(feed_dict={hidden2: h2_cache_valid,  # not shown
+                                                    y: y_valid})  # not shown
+            print(epoch, "Validation accuracy:", accuracy_val)  # not shown
+
+        save_path = saver.save(sess, "./my_new_model_final.ckpt")
+
+## 利用其他优化器加速训练
+##  faster optimizers
+    ## 在TensorFlow中实现动量优化是一个明智的选择：只需用MomentumOptimizer替换GradientDescentOptimizer，
+    ##  Momentum优化的一个缺点是它增加了另一个需要调整的超参数。 然而，0.9的动量值通常在实践中运作良好，并且几乎总是比梯度下降更快。
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+                                           momentum=0.9)
+    ## 只需在创建 MomentumOptimizer 时设置 use_nesterov = True
+    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate,
+                                           momentum=0.9, use_nesterov=True)
+
+    ## adagrad
+    optimizer = tf.train.AdagradOptimizer(learning_rate=learning_rate)
+
+    ## RMSProp
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate,
+                                          momentum=0.9, decay=0.9, epsilon=1e-10)
+
+    ## adam optimization
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+
+##############################################
+    ## 动态改变学习速率
+    ## learning rate scheduling
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_hidden2 = 50
+    n_outputs = 10
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
+        logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+    ## 按照训练步数 逐步改变学习速率
+    with tf.name_scope("train"):  # not shown in the book
+        initial_learning_rate = 0.1
+        decay_steps = 10000
+        decay_rate = 1 / 10
+        global_step = tf.Variable(0, trainable=False, name="global_step")
+        learning_rate = tf.train.exponential_decay(initial_learning_rate, global_step,
+                                                   decay_steps, decay_rate)
+        optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9)
+        training_op = optimizer.minimize(loss, global_step=global_step)
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 5
+    batch_size = 50
+
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+### 加正则避免过拟合
+## avoiding overfitting through regularization
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_outputs = 10
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+        logits = tf.layers.dense(hidden1, n_outputs, name="outputs")
+
+    W1 = tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
+    W2 = tf.get_default_graph().get_tensor_by_name("outputs/kernel:0")
+
+    scale = 0.001  # l1 regularization hyperparameter
+    ### 损失函数加L1正则
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
+                                                                  logits=logits)
+        base_loss = tf.reduce_mean(xentropy, name="avg_xentropy")
+        reg_losses = tf.reduce_sum(tf.abs(W1)) + tf.reduce_sum(tf.abs(W2))
+        loss = tf.add(base_loss, scale * reg_losses, name="loss")
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    learning_rate = 0.01
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    batch_size = 200
+
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+##########################################################################
 #     reset_graph()
 #
 #     n_inputs = 28 * 28  # MNIST
