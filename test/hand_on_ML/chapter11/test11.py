@@ -1069,233 +1069,246 @@ if __name__ == '__main__':
         save_path = saver.save(sess, "./my_model_final.ckpt")
 
 ##########################################################################
-#     reset_graph()
-#
-#     n_inputs = 28 * 28  # MNIST
-#     n_hidden1 = 300
-#     n_hidden2 = 50
-#     n_outputs = 10
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     scale = 0.001
-#
-#     my_dense_layer = partial(
-#         tf.layers.dense, activation=tf.nn.relu,
-#         kernel_regularizer=tf.contrib.layers.l1_regularizer(scale))
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = my_dense_layer(X, n_hidden1, name="hidden1")
-#         hidden2 = my_dense_layer(hidden1, n_hidden2, name="hidden2")
-#         logits = my_dense_layer(hidden2, n_outputs, activation=None,
-#                                 name="outputs")
-#
-#     with tf.name_scope("loss"):  # not shown in the book
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(  # not shown
-#             labels=y, logits=logits)  # not shown
-#         base_loss = tf.reduce_mean(xentropy, name="avg_xentropy")  # not shown
-#         # 必须将正规化损失添加到基本损失中
-#         reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-#         loss = tf.add_n([base_loss] + reg_losses, name="loss")
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
-#
-#     learning_rate = 0.01
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-#         training_op = optimizer.minimize(loss)
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 20
-#     batch_size = 200
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")
-#
-#
-# ## dropout
-#     reset_graph()
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     training = tf.placeholder_with_default(False, shape=(), name='training')
-#
-#     dropout_rate = 0.5  # == 1 - keep_prob
-#     X_drop = tf.layers.dropout(X, dropout_rate, training=training)
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X_drop, n_hidden1, activation=tf.nn.relu,
-#                                   name="hidden1")
-#         hidden1_drop = tf.layers.dropout(hidden1, dropout_rate, training=training)
-#         hidden2 = tf.layers.dense(hidden1_drop, n_hidden2, activation=tf.nn.relu,
-#                                   name="hidden2")
-#         hidden2_drop = tf.layers.dropout(hidden2, dropout_rate, training=training)
-#         logits = tf.layers.dense(hidden2_drop, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9)
-#         training_op = optimizer.minimize(loss)
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 20
-#     batch_size = 50
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch, training: True})
-#             accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
-#             print(epoch, "Validation accuracy:", accuracy_val)
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")
-#
-#
-#     ## max norm
-#
-#     reset_graph()
-#
-#     n_inputs = 28 * 28
-#     n_hidden1 = 300
-#     n_hidden2 = 50
-#     n_outputs = 10
-#
-#     learning_rate = 0.01
-#     momentum = 0.9
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
-#         logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
-#         training_op = optimizer.minimize(loss)
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-#
-#     threshold = 1.0
-#     weights = tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
-#     clipped_weights = tf.clip_by_norm(weights, clip_norm=threshold, axes=1)
-#     clip_weights = tf.assign(weights, clipped_weights)
-#
-#     weights2 = tf.get_default_graph().get_tensor_by_name("hidden2/kernel:0")
-#     clipped_weights2 = tf.clip_by_norm(weights2, clip_norm=threshold, axes=1)
-#     clip_weights2 = tf.assign(weights2, clipped_weights2)
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 20
-#     batch_size = 50
-#
-#     with tf.Session() as sess:  # not shown in the book
-#         init.run()  # not shown
-#         for epoch in range(n_epochs):  # not shown
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):  # not shown
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#                 clip_weights.eval()
-#                 clip_weights2.eval()  # not shown
-#             acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
-#             print(epoch, "Validation accuracy:", acc_valid)  # not shown
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")  # not shown
-#
-#     def max_norm_regularizer(threshold, axes=1, name="max_norm",
-#                              collection="max_norm"):
-#         def max_norm(weights):
-#             clipped = tf.clip_by_norm(weights, clip_norm=threshold, axes=axes)
-#             clip_weights = tf.assign(weights, clipped, name=name)
-#             tf.add_to_collection(collection, clip_weights)
-#             return None  # there is no regularization loss term
-#
-#         return max_norm
-#
-#     reset_graph()
-#
-#     n_inputs = 28 * 28
-#     n_hidden1 = 300
-#     n_hidden2 = 50
-#     n_outputs = 10
-#
-#     learning_rate = 0.01
-#     momentum = 0.9
-#
-#     X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
-#     y = tf.placeholder(tf.int32, shape=(None), name="y")
-#
-#     max_norm_reg = max_norm_regularizer(threshold=1.0)
-#
-#     with tf.name_scope("dnn"):
-#         hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu,
-#                                   kernel_regularizer=max_norm_reg, name="hidden1")
-#         hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu,
-#                                   kernel_regularizer=max_norm_reg, name="hidden2")
-#         logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
-#
-#     with tf.name_scope("loss"):
-#         xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
-#         loss = tf.reduce_mean(xentropy, name="loss")
-#
-#     with tf.name_scope("train"):
-#         optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
-#         training_op = optimizer.minimize(loss)
-#
-#     with tf.name_scope("eval"):
-#         correct = tf.nn.in_top_k(logits, y, 1)
-#         accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-#
-#     init = tf.global_variables_initializer()
-#     saver = tf.train.Saver()
-#
-#     n_epochs = 20
-#     batch_size = 50
-#
-#     clip_all_weights = tf.get_collection("max_norm")
-#
-#     with tf.Session() as sess:
-#         init.run()
-#         for epoch in range(n_epochs):
-#             for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
-#                 sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
-#                 sess.run(clip_all_weights)
-#             acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
-#             print(epoch, "Validation accuracy:", acc_valid)  # not shown
-#
-#         save_path = saver.save(sess, "./my_model_final.ckpt")  # not shown
-#
-#
+    ## 我们可以将正则化函数传递给f.layers.dense（）函数，该函数将使用它来创建计算正则化损失的运算，
+    ## 并将这些运算添加到正则化损失的集合中。
+
+    reset_graph()
+
+    n_inputs = 28 * 28  # MNIST
+    n_hidden1 = 300
+    n_hidden2 = 50
+    n_outputs = 10
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    scale = 0.001
+    ###  训练隐藏层 加入L1正则化
+    my_dense_layer = partial(
+        tf.layers.dense, activation=tf.nn.relu,
+        kernel_regularizer=tf.contrib.layers.l1_regularizer(scale))
+
+    with tf.name_scope("dnn"):
+        hidden1 = my_dense_layer(X, n_hidden1, name="hidden1")
+        hidden2 = my_dense_layer(hidden1, n_hidden2, name="hidden2")
+        logits = my_dense_layer(hidden2, n_outputs, activation=None,
+                                name="outputs")
+
+    with tf.name_scope("loss"):  # not shown in the book
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(  # not shown
+            labels=y, logits=logits)  # not shown
+        base_loss = tf.reduce_mean(xentropy, name="avg_xentropy")  # not shown
+        # 必须将正规化损失添加到基本损失中
+        reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        loss = tf.add_n([base_loss] + reg_losses, name="loss")
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32), name="accuracy")
+
+    learning_rate = 0.01
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        training_op = optimizer.minimize(loss)
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    batch_size = 200
+
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+
+## dropout
+##################################################################
+    reset_graph()
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    training = tf.placeholder_with_default(False, shape=(), name='training')
+    ## 设置丢失率
+    dropout_rate = 0.5  # == 1 - keep_prob
+    X_drop = tf.layers.dropout(X, dropout_rate, training=training)
+    ## 隐藏层设置 dropout
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X_drop, n_hidden1, activation=tf.nn.relu,
+                                  name="hidden1")
+        hidden1_drop = tf.layers.dropout(hidden1, dropout_rate, training=training)
+        hidden2 = tf.layers.dense(hidden1_drop, n_hidden2, activation=tf.nn.relu,
+                                  name="hidden2")
+        hidden2_drop = tf.layers.dropout(hidden2, dropout_rate, training=training)
+        logits = tf.layers.dense(hidden2_drop, n_outputs, name="outputs")
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=0.9)
+        training_op = optimizer.minimize(loss)
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    batch_size = 50
+
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch, training: True})
+            accuracy_val = accuracy.eval(feed_dict={X: X_valid, y: y_valid})
+            print(epoch, "Validation accuracy:", accuracy_val)
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")
+
+###########################################################
+    ## max norm   最大范数正则化
+
+    reset_graph()
+
+    n_inputs = 28 * 28
+    n_hidden1 = 300
+    n_hidden2 = 50
+    n_outputs = 10
+
+    learning_rate = 0.01
+    momentum = 0.9
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu, name="hidden2")
+        logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
+        training_op = optimizer.minimize(loss)
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+    ### 让我们对第一个隐藏层的权重进行处理，并创建一个使用 clip_by_norm() 函数计算剪切权重的操作。
+    ### 然后我们创建一个赋值操作，将剪切的权重分配给权重变量
+    threshold = 1.0
+    weights = tf.get_default_graph().get_tensor_by_name("hidden1/kernel:0")
+    clipped_weights = tf.clip_by_norm(weights, clip_norm=threshold, axes=1)
+    clip_weights = tf.assign(weights, clipped_weights)
+    ###  我们也可以为第二个隐藏层执行此操作：
+    weights2 = tf.get_default_graph().get_tensor_by_name("hidden2/kernel:0")
+    clipped_weights2 = tf.clip_by_norm(weights2, clip_norm=threshold, axes=1)
+    clip_weights2 = tf.assign(weights2, clipped_weights2)
+    ### 让我们添加一个 initializer 和 a saver:
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    batch_size = 50
+
+    with tf.Session() as sess:  # not shown in the book
+        init.run()  # not shown
+        for epoch in range(n_epochs):  # not shown
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):  # not shown
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+                clip_weights.eval()
+                clip_weights2.eval()  # not shown
+            acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
+            print(epoch, "Validation accuracy:", acc_valid)  # not shown
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")  # not shown
+
+    def max_norm_regularizer(threshold, axes=1, name="max_norm",
+                             collection="max_norm"):
+        def max_norm(weights):
+            clipped = tf.clip_by_norm(weights, clip_norm=threshold, axes=axes)
+            clip_weights = tf.assign(weights, clipped, name=name)
+            tf.add_to_collection(collection, clip_weights)
+            return None  # there is no regularization loss term
+
+        return max_norm
+
+
+############################################
+    ### 然后你可以调用这个函数来获得一个最大范数正则化器（具有你想要的阈值）。
+
+    #### 创建隐藏层时，可以将此正则化程序传递给kernel_regularizer参数
+
+    reset_graph()
+
+    n_inputs = 28 * 28
+    n_hidden1 = 300
+    n_hidden2 = 50
+    n_outputs = 10
+
+    learning_rate = 0.01
+    momentum = 0.9
+
+    X = tf.placeholder(tf.float32, shape=(None, n_inputs), name="X")
+    y = tf.placeholder(tf.int32, shape=(None), name="y")
+
+    #### max_norm_regularizer()函数返回 一个参数化的max_norm（）函数，你可以像使用任何其他正则化器一样使用它：
+    max_norm_reg = max_norm_regularizer(threshold=1.0)
+
+    with tf.name_scope("dnn"):
+        hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu,
+                                  kernel_regularizer=max_norm_reg, name="hidden1")
+        hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu,
+                                  kernel_regularizer=max_norm_reg, name="hidden2")
+        logits = tf.layers.dense(hidden2, n_outputs, name="outputs")
+
+    with tf.name_scope("loss"):
+        xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits)
+        loss = tf.reduce_mean(xentropy, name="loss")
+
+    with tf.name_scope("train"):
+        optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
+        training_op = optimizer.minimize(loss)
+
+    with tf.name_scope("eval"):
+        correct = tf.nn.in_top_k(logits, y, 1)
+        accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    n_epochs = 20
+    batch_size = 50
+
+    clip_all_weights = tf.get_collection("max_norm")
+
+    with tf.Session() as sess:
+        init.run()
+        for epoch in range(n_epochs):
+            for X_batch, y_batch in shuffle_batch(X_train, y_train, batch_size):
+                sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+                sess.run(clip_all_weights)
+            acc_valid = accuracy.eval(feed_dict={X: X_valid, y: y_valid})  # not shown
+            print(epoch, "Validation accuracy:", acc_valid)  # not shown
+
+        save_path = saver.save(sess, "./my_model_final.ckpt")  # not shown
+
+
 
