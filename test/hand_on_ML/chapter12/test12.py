@@ -23,11 +23,11 @@ plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
 
 # Where to save the figures
-PROJECT_ROOT_DIR = "F:\ML\Machine learning\Hands-on machine learning with scikit-learn and tensorflow"
+PROJECT_ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 CHAPTER_ID = "12_Distributed TensorFlow"
 
 def save_fig(fig_id, tight_layout=True):
-    path = os.path.join(PROJECT_ROOT_DIR, "images", CHAPTER_ID, fig_id + ".png")
+    path = os.path.join(PROJECT_ROOT_DIR, "../images", CHAPTER_ID, fig_id + ".png")
     print("Saving figure", fig_id)
     if tight_layout:
         plt.tight_layout()
