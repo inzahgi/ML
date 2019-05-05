@@ -1011,3 +1011,5 @@ if __name__ == '__main__':
     training_op = optimizer.minimize(loss)
 
     init = tf.global_variables_initializer()
+    
+    
