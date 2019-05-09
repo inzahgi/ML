@@ -3,6 +3,8 @@
 # To support both python 2 and python 3
 from __future__ import division, print_function, unicode_literals
 
+import tensorflow as tf
+
 # Common imports
 import numpy as np
 import os
@@ -112,6 +114,21 @@ def render_policy_net(model_path, action, X, n_max_steps = 1000):
     env.close()
     return frames
 
+
+def discount_rewards(rewards, discount_rate):
+    discounted_rewards = np.zeros(len(rewards))
+    cumulative_rewards = 0
+    for step in reversed(range(len(rewards))):
+        cumulative_rewards = rewards[step] + cumulative_rewards * discount_rate
+        discounted_rewards[step] = cumulative_rewards
+    return discounted_rewards
+
+def discount_and_normalize_rewards(all_rewards, discount_rate):
+    all_discounted_rewards = [discount_rewards(rewards, discount_rate) for rewards in all_rewards]
+    flat_rewards = np.concatenate(all_discounted_rewards)
+    reward_mean = flat_rewards.mean()
+    reward_std = flat_rewards.std()
+    return [(discounted_rewards - reward_mean)/reward_std for discounted_rewards in all_discounted_rewards]
 
 if __name__ == '__main__':
 
@@ -296,3 +313,109 @@ if __name__ == '__main__':
 ##########################################
 ####  Evaluating Actions: The Credit Assignment Problem
 
+    reset_graph()
+
+    n_inputs = 4
+    n_hidden = 4
+    n_outputs = 1
+
+    learning_rate = 0.01
+
+    initializer = tf.variance_scaling_initializer()
+
+    X = tf.placeholder(tf.float32, shape=[None, n_inputs])
+
+    hidden = tf.layers.dense(X, n_hidden, activation=tf.nn.elu, kernel_initializer=initializer)
+    logits = tf.layers.dense(hidden, n_outputs)
+    outputs = tf.nn.sigmoid(logits)  # probability of action 0 (left)
+    p_left_and_right = tf.concat(axis=1, values=[outputs, 1 - outputs])
+    action = tf.multinomial(tf.log(p_left_and_right), num_samples=1)
+
+    # 目标概率y
+    y = 1. - tf.to_float(action)
+
+    # 定义损失函数，计算梯度
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=logits)
+    optimizer = tf.train.AdamOptimizer(learning_rate)
+    grads_and_vars = optimizer.compute_gradients(cross_entropy)
+
+    # 请注意，我们正在调用优化器的compute_gradients（）方法而不是minimize（）方法。
+    # 这是因为我们想在应用梯度之前调整梯度。
+    # compute_gradients（）方法返回梯度向量/变量对的列表（每个可训练变量一对）。
+    # 让我们将所有梯度放在一个列表中，以便更方便地获取它们的值：
+
+    gradients = [grad for grad, variable in grads_and_vars]
+
+    # 好的，现在是棘手的部分。在执行阶段，算法将运行策略，并在每个步骤评估这些梯度张量并存储它们的值。
+    # 在一些epoches 之后，它将调整这些梯度，如前所述（即，将它们乘以动作分数并将它们标准化）并计算调整梯度的平均值。
+    # 接下来，它需要将生成的梯度反馈给优化器，以便它可以执行优化步骤。
+    # 这意味着每个梯度向量需要一个占位符。
+    # 此外，我们必须创建一个使用更新过的梯度的操作
+    # 为此，我们将调用优化器的apply_gradients（）函数，该函数获取梯度向量/变量对的列表。
+    # 我们将给它一个包含更新梯度的列表（即通过梯度占位符提供的梯度），而不是给它原始的梯度向量：
+
+    gradient_placeholders = []
+    grads_and_vars_feed = []
+    for grad, variable in grads_and_vars:
+        gradient_placeholder = tf.placeholder(tf.float32, shape=grad.get_shape())
+        gradient_placeholders.append(gradient_placeholder)
+        grads_and_vars_feed.append((gradient_placeholder, variable))
+    training_op = optimizer.apply_gradients(grads_and_vars_feed)
+
+    init = tf.global_variables_initializer()
+    saver = tf.train.Saver()
+
+    discount_rewards([10, 0, -50], discount_rate=0.8)
+
+    discount_and_normalize_rewards([[10, 0, -50], [10, 20]], discount_rate=0.8)
+
+    env = gym.make("CartPole-v0")
+
+    n_games_per_update = 10  # train the policy every 10 episodes
+    n_max_steps = 1000  # max steps per episode
+    n_iterations = 250  # number of training iterations
+    save_iterations = 10  # save the model every 10 training iterations
+    discount_rate = 0.95
+
+    with tf.Session() as sess:
+        init.run()
+        for iteration in range(n_iterations):
+            print("\rIteration: {}".format(iteration), end="")
+            all_rewards = []  # all sequences of raw rewards for each episode
+            all_gradients = []  # gradients saved at each step of each episode
+            for game in range(n_games_per_update):
+                current_rewards = []  # all raw rewards from the current episode
+                current_gradients = []  # all gradients from the current episode
+                obs = env.reset()
+                for step in range(n_max_steps):
+                    action_val, gradients_val = sess.run([action, gradients], feed_dict={X: obs.reshape(1, n_inputs)})
+                    obs, reward, done, info = env.step(action_val[0][0])
+                    current_rewards.append(reward)
+                    current_gradients.append(gradients_val)
+                    if done:
+                        break
+                all_rewards.append(current_rewards)
+                all_gradients.append(current_gradients)
+
+            # At this point we have run the policy for 10 episodes, and we are
+            # ready for a policy update using the algorithm described earlier.
+            all_rewards = discount_and_normalize_rewards(all_rewards, discount_rate=discount_rate)
+            feed_dict = {}
+            for var_index, gradient_placeholder in enumerate(gradient_placeholders):
+                # multiply the gradients by the action scores, and compute the mean
+                mean_gradients = np.mean([reward * all_gradients[game_index][step][var_index]
+                                          for game_index, rewards in enumerate(all_rewards)
+                                          for step, reward in enumerate(rewards)], axis=0)
+                feed_dict[gradient_placeholder] = mean_gradients
+            sess.run(training_op, feed_dict=feed_dict)
+            if iteration % save_iterations == 0:
+                saver.save(sess, "./my_policy_net_pg.ckpt")
+
+    env.close()
+
+    frames = render_policy_net("./my_policy_net_pg.ckpt", action, X, n_max_steps=1000)
+    video = plot_animation(frames)
+    plt.show()
+
+###################################
+######   Markov Chains
