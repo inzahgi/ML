@@ -130,6 +130,50 @@ def discount_and_normalize_rewards(all_rewards, discount_rate):
     reward_std = flat_rewards.std()
     return [(discounted_rewards - reward_mean)/reward_std for discounted_rewards in all_discounted_rewards]
 
+
+
+def policy_fire(state):
+    return [0, 2, 1][state]
+
+def policy_random(state):
+    return np.random.choice(possible_actions[state])
+
+def policy_safe(state):
+    return [0, 0, 1][state]
+
+class MDPEnvironment(object):
+    def __init__(self, start_state=0):
+        self.start_state=start_state
+        self.reset()
+    def reset(self):
+        self.total_rewards = 0
+        self.state = self.start_state
+    def step(self, action):
+        next_state = np.random.choice(range(3), p=transition_probabilities[self.state][action])
+        reward = rewards[self.state][action][next_state]
+        self.state = next_state
+        self.total_rewards += reward
+        return self.state, reward
+
+def run_episode(policy, n_steps, start_state=0, display=True):
+    env = MDPEnvironment()
+    if display:
+        print("States (+rewards):", end=" ")
+    for step in range(n_steps):
+        if display:
+            if step == 10:
+                print("...", end=" ")
+            elif step < 10:
+                print(env.state, end=" ")
+        action = policy(env.state)
+        state, reward = env.step(action)
+        if display and step < 10:
+            if reward:
+                print("({})".format(reward), end=" ")
+    if display:
+        print("Total rewards =", env.total_rewards)
+    return env.total_rewards
+
 if __name__ == '__main__':
 
     gym.logger.set_level(40)  # 忽略不必要的广告
@@ -419,3 +463,97 @@ if __name__ == '__main__':
 
 ###################################
 ######   Markov Chains
+
+    transition_probabilities = [
+        [0.7, 0.2, 0.0, 0.1],  # from s0 to s0, s1, s2, s3
+        [0.0, 0.0, 0.9, 0.1],  # from s1 to ...
+        [0.0, 1.0, 0.0, 0.0],  # from s2 to ...
+        [0.0, 0.0, 0.0, 1.0],  # from s3 to ...
+    ]
+
+    n_max_steps = 50
+
+
+    def print_sequence(start_state=0):
+        current_state = start_state
+        print("States:", end=" ")
+        for step in range(n_max_steps):
+            print(current_state, end=" ")
+            if current_state == 3:
+                break
+            current_state = np.random.choice(range(4), p=transition_probabilities[current_state])
+        else:
+            print("...", end="")
+        print()
+
+
+    for _ in range(10):
+        print_sequence()
+
+
+#### Markov Decision Process
+
+    nan = np.nan  # repressents impossible actions
+    T = np.array([  # shape=[s, a, s']
+        [[0.7, 0.3, 0.0], [1.0, 0.0, 0.0], [0.8, 0.2, 0.0]],
+        [[0.0, 1.0, 0.0], [nan, nan, nan], [0.0, 0.0, 1.0]],
+        [[nan, nan, nan], [0.8, 0.1, 0.1], [nan, nan, nan]],
+    ])
+
+    R = np.array([  # shape=[s, a, s']
+        [[10., 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        [[10., 0.0, 0.0], [nan, nan, nan], [0.0, 0.0, -50.]],
+        [[nan, nan, nan], [40., 0.0, 0.0], [nan, nan, nan]],
+    ])
+
+    possible_actions = [[0, 1, 2], [0, 2], [1]]
+
+    Q = np.full((3, 3), -np.inf)  # -inf for impossible actions
+    for state, actions in enumerate(possible_actions):
+        Q[state, actions] = 0.0  # Initial value = 0.0, for all possible actions
+
+    learning_rate = 0.01
+    discount_rate = 0.95
+    n_iterations = 100
+
+    for iteration in range(n_iterations):
+        Q_prev = Q.copy()
+        for s in range(3):
+            for a in possible_actions[s]:
+                Q[s, a] = np.sum([
+                    T[s, a, sp] * (R[s, a, sp] + discount_rate * np.max(Q_prev[sp]))
+                    for sp in range(3)
+                ])
+
+
+    print("Q = {}".format(Q))
+
+    np.argmax(Q, axis=1)  # optimal action for each state
+
+    transition_probabilities = [
+        [[0.7, 0.3, 0.0], [1.0, 0.0, 0.0], [0.8, 0.2, 0.0]],
+        # in s0, if action a0 then proba 0.7 to state s0 and 0.3 to state s1, etc.
+        [[0.0, 1.0, 0.0], None, [0.0, 0.0, 1.0]],
+        [None, [0.8, 0.1, 0.1], None],
+    ]
+
+    rewards = [
+        [[+10, 0, 0], [0, 0, 0], [0, 0, 0]],
+        [[0, 0, 0], [0, 0, 0], [0, 0, -50]],
+        [[0, 0, 0], [+40, 0, 0], [0, 0, 0]],
+    ]
+
+    possible_actions = [[0, 1, 2], [0, 2], [1]]
+
+    for policy in (policy_fire, policy_random, policy_safe):
+        all_totals = []
+        print(policy.__name__)
+        for episode in range(1000):
+            all_totals.append(run_episode(policy, n_steps=100, display=(episode < 5)))
+        print("Summary: mean={:.1f}, std={:1f}, min={}, max={}".format(np.mean(all_totals), np.std(all_totals),
+                                                                       np.min(all_totals), np.max(all_totals)))
+        print()
+
+
+####################################################
+#####  Temporal Difference Learning and Q-Learning
