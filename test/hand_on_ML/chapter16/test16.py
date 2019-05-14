@@ -14,6 +14,8 @@ from PIL import Image, ImageDraw
 
 import gym
 
+import numpy.random as rnd
+
 # to make this notebook's output stable across runs
 def reset_graph(seed=42):
     tf.reset_default_graph()
@@ -173,6 +175,18 @@ def run_episode(policy, n_steps, start_state=0, display=True):
     if display:
         print("Total rewards =", env.total_rewards)
     return env.total_rewards
+
+def optimal_policy(state):
+    return np.argmax(q_values[state])
+
+
+def preprocess_observation(obs):
+    img = obs[1:176:2, ::2] # crop and downsize
+    img = img.sum(axis=2) # to greyscale
+    img[img==mspacman_color] = 0 # Improve contrast
+    img = (img // 3 - 128).astype(np.int8) # normalize from -128 to 127
+    return img.reshape(88, 80, 1)
+
 
 if __name__ == '__main__':
 
@@ -556,4 +570,83 @@ if __name__ == '__main__':
 
 
 ####################################################
-#####  Temporal Difference Learning and Q-Learning
+#####  Temporal Difference Learning and Q-LearningTemporal Difference Learning and Q-Learning
+
+    learning_rate0 = 0.05
+    learning_rate_decay = 0.1
+    n_iterations = 20000
+
+    s = 0  # start in state 0
+    Q = np.full((3, 3), -np.inf)  # -inf for impossible actions
+    for state, actions in enumerate(possible_actions):
+        Q[state, actions] = 0.0  # Initial value = 0.0, for all possible actions
+
+    for iteration in range(n_iterations):
+        a = rnd.choice(possible_actions[s])  # 随机选择一个动作
+        sp = rnd.choice(range(3), p=T[s, a])  # 使用T[s, a] 选择下一个状态
+        reward = R[s, a, sp]
+        learning_rate = learning_rate0 / (1 + iteration * learning_rate_decay)
+        Q[s, a] = learning_rate * Q[s, a] + (1 - learning_rate) * (
+                reward + discount_rate * np.max(Q[sp])
+        )
+        s = sp  # 移动到下一个状态
+
+    n_states = 3
+    n_actions = 3
+    n_steps = 20000
+    alpha = 0.01
+    gamma = 0.99
+    exploration_policy = policy_random
+    q_values = np.full((n_states, n_actions), -np.inf)
+    for state, actions in enumerate(possible_actions):
+        q_values[state][actions] = 0
+
+    env = MDPEnvironment()
+    for step in range(n_steps):
+        action = exploration_policy(env.state)
+        state = env.state
+        next_state, reward = env.step(action)
+        next_value = np.max(q_values[next_state])  # greedy policy
+        q_values[state, action] = (1 - alpha) * q_values[state, action] + alpha * (reward + gamma * next_value)
+
+
+    print(q_values)
+
+    all_totals = []
+    for episode in range(1000):
+        all_totals.append(run_episode(optimal_policy, n_steps=100, display=(episode < 5)))
+    print("Summary: mean={:.1f}, std={:1f}, min={}, max={}".format(np.mean(all_totals), np.std(all_totals),
+                                                                   np.min(all_totals), np.max(all_totals)))
+    print()
+
+
+######################################
+###  Learning to Play MsPacman Using the DQN Algorithm
+
+#### 创建 MsPacman 环境
+    env = gym.make("MsPacman-v0")
+    obs = env.reset()
+    obs.shape
+
+    env.action_space
+
+    mspacman_color = 210 + 164 + 74
+
+    img = preprocess_observation(obs)
+
+    plt.figure(figsize=(11, 7))
+    plt.subplot(121)
+    plt.title("Original observation (160×210 RGB)")
+    plt.imshow(obs)
+    plt.axis("off")
+    plt.subplot(122)
+    plt.title("Preprocessed observation (88×80 greyscale)")
+    plt.imshow(img.reshape(88, 80), interpolation="nearest", cmap="gray")
+    plt.axis("off")
+    save_fig("preprocessing_plot")
+    plt.show()
+
+
+
+##########################################
+###  Build DQN
